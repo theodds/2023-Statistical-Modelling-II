@@ -48,65 +48,105 @@ learn, you will learn deeply.
 
 ## Grading
 
-Your grade consists of three pieces: 30% exercises, 30% peer evaluation and 40%
-final project.
+Your grade consists of three pieces: 40% exercises, 40% final project, and 20%
+participation.
 
-### Exercises
+### Exercises and In-Class Sessions
 
-You will turn in a complete copy of all exercises at the end of the semester, in
-a single PDF document.
+**Homework will be due on the first class day of each month.** To lighten the
+burden, we will divide into groups of three each month (groups will not be
+allowed to overlap in subsequent months). **Groups will be randomly selected to
+present exercises for various problems, with code supporting code included,
+throughout the semester.** At the end of each lecture, I will give a list of
+homework problems that I may ask you to present a solution to during the
+next lecture, but it is expected that you and your group will do all of the
+exercises in the notes.
 
-### Peer evaluation
+I will grade homework submissions in the following way: each month I will select
+ten problems at random to grade. All parts of all problems will be weighted
+equally so that, for example, if I graded Problem 1, Problem 2a, and Problem 2b,
+then each of these would account for 1/3rd of the grade for the month. Each part
+will be graded either 0/2, 1/2, or 2/2.
 
-During the semester, you will be expected to do three main things on a recurring basis:
+As far as how submissions should look:
 
-1) Work on the exercises outside of class, and document your code so that someone else can follow it.  You will post all of your code and materials on your GitHub page.
+1. For mathematics questions, I'm fine with you turning in hand-written
+   solutions, provided that you answer the questions using complete sentences.
+   Answers should not consist of just of long strings of calculations with no
+   comments; you need to explain what you are doing.
+   
+2. For data analysis or coding questions, I expect results to be typed up with
+   code given in-line and explained. It should be structured more-or-less like
+   how I have things written up in the notes (i.e., code and discussion given
+   together). The easiest way to do this would be to submit an R Markdown or
+   Quarto document, or create a Jupyter notebook. If using one of these
+   frameworks, you should submit both the compiled document as a pdf as well as
+   the raw notebook/`.rmd`/`.qmd` document.
 
-2) Present your work in front of class, either up at the board or by hooking up your computer and showing us your code and results.
+### Peer Evaluation
 
-3) Provide at least three peer reviews of others' code and analyses from their GitHub pages, so that everyone gets feedback.  You'll do this about once every 3-4 weeks, and I'll assign the reviewers randomly.
+For each homework submission, you will give a grade to each of your group
+members (including yourself) that reflects the grade that you would assign that
+group member based on their contribution to the homework assignments and
+in-class presentations, as well as any notes that you have about how the month
+went. **This, in addition to participation in class, will be used to assign
+participation credit.** This, in combination with the homework turned in, will be
+used to assign a grade for the homework each month. **Note:** I will still have
+final say on the grade each student gets on homework, and may overrule any
+good/bad evaluations if I feel (and have evidence supporting) that the
+evaluations are not representative of a student's contributions.
 
-<!-- At the end of the semester, everyone will (privately) turn in a document that summarizes their assessment of each person's contribution to the course.  Those who have helped others to learn (e.g. by presenting excellent work in class or by offering thoughtful peer reviews, will presumably get good evaluations).  I'll use these summaries to set the peer-evaluation grades.  Note: I'll still have the final say here.   -->
+### Final project
 
-<!-- ### Final project   -->
+Pick some relevant topic that interests you. Clear it with me ahead of time, and
+then do it. Basically, I trust you to choose something that will optimize your
+own learning experience, and that will dovetail with your research and
+educational goals. It certainly can overlap with your own research. Examples:
 
-<!-- Pick some relevant topic that interests you.  Clear it with me ahead of time, and then do it.  Basically, I trust you to choose something that will optimize your own learning experience, and that will dovetail with your research and educational goals.  It certainly can overlap with your own research.  Examples:   -->
+1) Analyze a data set from your own research, using techniques from class or
+closely related techniques.
 
-<!-- 1) Analyze a data set from your own research, using techniques from class or closely related techniques.   -->
-<!-- 2) Invent a new technique and show how awesome it is.   -->
-<!-- 3) Prove something interesting about a procedure or algorithm related to what we're studying (admittedly unlikely, but certainly possible!)   -->
-<!-- 4) Read a paper, or a group of related papers, that expands on some topic we've covered in class.  Implement the method(s) and benchmark it (them) against something else.   -->
+2) Invent a new technique and show how awesome it is.
 
-<!-- Final projects are due on the last class day of the semester: Friday, May 6.   -->
+3) Prove something interesting about a procedure or algorithm related to what
+we're studying (admittedly unlikely, but certainly possible!)
 
-<!-- Note: you should feel free to work either solo or in pairs for the projects. -->
+4) Read a paper, or a group of related papers, that expands on some topic we've
+covered in class. Implement the method(s) and benchmark it (them) against
+something else.
 
+Final projects are due on the day of the university-scheduled exam: Friday, May
+4th.
 
+Note: you should feel free to work either solo or in pairs for the projects.
 
-<!-- ## Requirements   -->
+## Programming Requirements
 
-<!-- 1) Set up a [GitHub](www.github.com) account if you don't already have one.   -->
+We will use `R` and `RStudio` in class. Because of the group-work aspect of this
+class, and the fact that we will be presenting solutions, it is important that
+we all have at least the language in common, so I won't accept code written in
+other languages. Sorry!
 
-<!-- 2) Learn how to use GitHub, either via the command line or through a source-code browser like GitHub Desktop or SourceTree.    -->
+**I am happy to assist with programming issues, especially if you haven't used
+`R` before, but it is your responsibility to either learn this material on your
+own or reach out to me for help if you are struggling.**
 
-<!-- 3) Optional, but recommended: bring your own data!   -->
+## Topics
 
+Here's a partial list of topics that we'll cover.
 
-<!-- ## Topics -->
+- Generalized linear models (GLMs)
+- The parametric and nonparametric bootstraps
+- Robust inference with semiparametric and dependent data
+- Hierarchical models and multi-level regression
+- The multivariate normal distribution
+- Function estimation (nonparametric regression, density estimation, etc)
 
-<!-- Here's a partial list of topics that we'll cover.    -->
+There are no formally required textbooks, but here are three recommended references:
 
-<!-- - The multivariate normal distribution   -->
-<!-- - GLMs   -->
-<!-- - Linear smoothing and local regression -->
-<!-- - Gaussian processes    -->
-<!-- - Hierarchical models and multi-level regression   -->
-<!-- - Inference for hyperparameters in hierarchical models   -->
-<!-- - Bayesian time-series and/or spatial models -->
-<!-- - Mixture models and/or latent factor models (if time) -->
-
-<!-- There are no formally required textbooks, but here are three recommended references:   -->
-
-<!-- - [Data Analysis Using Regression and Multilevel/Hierarchical Models](http://www.stat.columbia.edu/~gelman/arm/), by Andrew Gelman and Jennifer Hill.  An e-book version is available through the [UT Library website](http://www.lib.utexas.edu).   -->
-<!-- - _Generalized Linear Models_ by McCullagh and Nelder   -->
-<!-- - _All of Statistics_ by Larry Wasserman.    -->
+- [Data Analysis Using Regression and Multilevel/Hierarchical
+  Models](http://www.stat.columbia.edu/~gelman/arm/), by Andrew Gelman and
+  Jennifer Hill. An e-book version is available through the [UT Library
+  website](http://www.lib.utexas.edu).
+- _Generalized Linear Models_ by McCullagh and Nelder
+- _All of Statistics_ by Larry Wasserman.
