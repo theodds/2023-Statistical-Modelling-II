@@ -1,4 +1,6 @@
-
+*.aux
+*.out
+*.synctex.gz
 *.pdf-view-restore
 *.el
 *ltximg/
@@ -7,3 +9,4 @@ Notes/Week-2_files/
 Notes/Week-2.tex
 Notes/Week-4.tex
 *.log
+*.#*
