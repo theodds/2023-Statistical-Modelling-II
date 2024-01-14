@@ -1,0 +1,82 @@
+\usepackage[most]{tcolorbox}
+\usepackage{bm}
+
+\newtcolorbox[auto counter]{myexample}[1][]{
+  breakable,
+  before upper=\setlength{\parskip}{5pt},
+  title=Example~\thetcbcounter: #1,
+  colback=white,
+  colframe=black,
+  colbacktitle=lightgray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced
+}
+
+\newtcolorbox[auto counter]{myexercise}[1][]{
+  breakable,
+  title=Exercise~\thetcbcounter: #1,
+  before upper=\setlength{\parskip}{5pt},
+  colback=white,
+  colframe=black,
+  colbacktitle=lightgray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced
+}
+
+\newtcolorbox[auto counter]{definition}[1][]{
+  breakable,
+  title=Definition~\thetcbcounter: #1,
+  before upper=\setlength{\parskip}{5pt},
+  colback=blue!5!white,
+  colframe=black,
+  colbacktitle=lightgray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced
+}
+
+\makeatletter
+\def\fps@figure{t}
+\makeatother
+
+
+\newcommand{\asim}{\stackrel{{}_{\bullet}}{\sim}}
+\newcommand{\bX}{\mathbf{X}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\by}{\mathbf{y}}
+\newcommand{\bY}{\mathbf{Y}}
+\newcommand{\Bernoulli}{\operatorname{Bernoulli}}
+\newcommand{\Binomial}{\operatorname{Binomial}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Data}{\mathcal D}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\Dirichlet}{\operatorname{Dirichlet}}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Ell}{\mathscr L}
+\newcommand{\EmpF}{\mathbb F}
+\newcommand{\Fhat}{\widehat F}
+\newcommand{\Fisher}{\mathcal I}
+\newcommand{\GEM}{\operatorname{GEM}}
+\newcommand{\Ghat}{\widehat G}
+\newcommand{\Gam}{\operatorname{Gam}}
+\newcommand{\GP}{\operatorname{GP}}
+\newcommand{\Identity}{\mathrm{I}}
+\newcommand{\iid}{\stackrel{\text{iid}}{\sim}}
+\newcommand{\indep}{\stackrel{\text{indep}}{\sim}}
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\MSE}{\operatorname{MSE}}
+\newcommand{\muhat}{\widehat\mu}
+\newcommand{\Odds}{\operatorname{Odds}}
+\newcommand{\OFisher}{\mathcal J}
+\newcommand{\psihat}{\widehat\psi}
+\newcommand{\Normal}{\operatorname{Normal}}
+\newcommand{\Poisson}{\operatorname{Poisson}}
+\newcommand{\Reals}{\mathbb R}
+\newcommand{\sC}{\mathcal C}
+\newcommand{\sF}{\mathscr F}
+\newcommand{\sG}{\mathcal G}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\zeros}{\boldsymbol{0}}
+\newcommand{\bmu}{\boldsymbol \mu}

@@ -1,0 +1,661 @@
+---
+title: "Week 2 Notes: Basics of Generalized Linear Models"
+format:
+  pdf:
+    include-in-header:
+      - file: macros.tex
+    keep-tex: true
+number-depth: 1
+number-sections: true
+---
+
+This week, we will discuss *generalized linear models*. Much of the exposition
+here is derived from the textbook *Generalized Linear Models* by McCullaugh and
+Nelder (1989). I am operating under the assumption that your previous classes
+have covered Frequentist and Bayesian approaches to linear models in sufficient
+detail, and that you have a basic understanding of how maximum likelihood
+estimation works and that the MLEs are asymptotically normal; if you don't know
+those things, we will discuss asymptotics of MLE in a later lecture, but it
+would be advisable to read up on ML estimation in the meantime as in these
+notes: \url{https://www.math.arizona.edu/~jwatkins/o-mle.pdf}.
+
+# Motivation
+
+Generalized linear models were introduced to resolve many of the limitations that arise from linear models --- perhaps most importantly, the heteroskedasticity that arises naturally from Poisson and binomial/Bernoulli response models. 
+
+In the beforetimes, when there was software to fit linear models but not generalized linear models, folks used a variety of hacks to deal with the fact that various types of data are intrinsically heteroskedsatic. For example, if $Y$ is a count we generally expect that $\Var(Y) \ge \E(Y)$ (for Poisson data, there is equality). One approach is to transform the data to be homoskedastic, i.e., we could use the model
+\begin{align*}
+  g(Y_i) = X_i^\top \beta + \epsilon_i
+\end{align*}
+for some transformation $g(\cdot)$, with $\E(\epsilon_i) = 0$ and
+$\Var(\epsilon_i) = \sigma^2$. Usually, we would take $g(y)$ to be a *variance
+stabilizing transformation*.
+
+:::{.myexercise data-latex="[Variance Stabilizing Transformations, label = exr:notes-glm-variance-stabilizing]"}
+
+Suppose that $Y \sim \Poisson(\lambda)$. Using the expansion
+\begin{align*}
+  g(y) \approx g(\lambda) + (y - \lambda) \, g'(\lambda)
+\end{align*}
+find a transformation $g(\cdot)$ such that the variance of $g(Y)$ is approximately constant.
+
+:::
+
+:::{.myexercise data-latex="[Limitations]"}
+
+Explain some of the deficiencies of the model from the previous exercise. For
+example: is there any issues with the interpretation of $\beta$ when compared
+with the usual linear regression model?
+
+:::
+
+The framework of generalized linear models allows for the same ideas underlying
+linear models to be extended to other response types (count, discrete,
+non-negative, etc) without resorting to the contortions of Exercise \ref{exr:notes-glm-variance-stabilizing}.
+
+# Generalized Linear Models
+
+The class of *generalized linear models* assumes that we are working with a dependent variable $Y_i$ that has a distribution in an *exponential dispersion family*.
+
+:::{.definition data-latex="[Exponential Dispersion Family]"}
+
+A family of distributions $\{f(\cdot ; \theta, \phi) : \theta \in \Theta, \phi \in \Phi\}$ is an *exponential dispersion family* if we can write
+$$
+\begin{aligned}
+  f(y; \theta, \phi)
+  =
+  \exp\left\{\frac{y\theta - b(\theta)}{\phi} + c(y; \phi)\right\},
+\end{aligned}
+$$
+for some *known* functions $b(\cdot)$ and $c(\cdot, \cdot)$. The parameter $\theta$ is referred to as the *canonical parameter* of the family and $\phi$ is referred to as the *dispersion parameter*.
+
+:::
+
+:::{.myexercise data-latex="[Examples of Exponential Dispersion Families]"}
+
+Show that the following families are types of exponential dispersion families, and find the corresponding $b, c, \theta, \phi$.
+
+1. $Y \sim \Normal(\mu, \sigma^2)$
+
+1. $Y = Z / N$ where $Z \sim \Binomial(N, p)$
+
+1. $Y \sim \Poisson(\lambda)$
+
+1. $Y \sim \Gam(\alpha, \beta)$ (parameterized so that $\E(Y) = \alpha / \beta$).
+
+:::
+
+Using this definition, we can define the class of generalized linear models.
+Generalized linear models serve the role of generalizing the normal linear
+regression model $Y_i = X_i^\top \beta + \epsilon_i$ to allow for $Y_i$ to
+discrete (or otherwise non-normally-distributed).
+
+:::{.definition data-latex="[Generalized Linear Models]"}
+
+Suppose that we have $\Data = \{(Y_i, x_i) : i = 1,\ldots, N\}$ (with the
+$x_i$'s regarded as fixed constants). We say that the $Y_i$'s follow a
+*generalized linear model* if:
+
+1. $Y_i$ has density/mass function
+   \begin{align*}
+     f(y_i \mid \theta_i, \phi / \omega_i)
+     =
+     \exp\left\{
+         \frac{y_i \, \theta_i - b(\theta_i)}{\phi / \omega_i} + 
+         c(y_i ; \phi / \omega_i)
+     \right\}
+   \end{align*}
+   where the coefficients $\omega_1, \ldots, \omega_N$ are known. This is
+   referred to as the *stochastic component* of the model.
+
+2. For some known (invertible) *link function* $g(\mu)$ we have
+   \begin{align*}
+     g(\mu_i) = x_i^\top\beta
+   \end{align*}
+   where $\mu_i = \E(Y_i \mid \theta_i, \phi / \omega_i)$. This is referred to
+   as the *systematic component* of the model. The term $\eta_i = x_i^\top\beta$
+   is known as the *linear predictor*.
+
+:::
+
+The reason we allow for the inclusion of individual-specific weights
+$\omega_i$'s is to allow for us to model (for example) binomial-type data where
+the sample sizes for the different units are different.
+
+:::{.myexercise data-latex="[GLM Moments, label = exr:notes-glm-moments]"}
+
+Suppose that $Y \sim f(y; \theta, \phi / \omega)$ for some exponential
+dispersion family. Show that
+
+1. $\E(Y \mid \theta, \phi / \omega) = b'(\theta)$; and
+
+2. $\Var(Y \mid \theta, \phi / \omega) = \frac{\phi}{\omega} b''(\theta)$.
+
+**Hint:** The log-likelihood is given by
+\begin{align*}
+  \log f = \frac{y\theta - b(\theta)}{\phi / \omega} 
+    + c(y, \phi / \omega).
+\end{align*}
+Use the *score equations*
+\begin{align*}
+  \E\{s(y; \theta, \phi / \omega) \mid \theta, \phi / \omega\} &= \zeros
+  \qquad \text{and} \\
+  \Var\{s(y; \theta, \phi / \omega) \mid \theta, \phi / \omega\} 
+  &= -\E\{\dot s(y; \theta, \phi / \omega)\},
+\end{align*}
+to derive the result, where
+\begin{align*}
+  s(y; \theta, \phi / \omega) 
+  = \frac{\partial}{\partial \theta} \log f
+  \qquad \text{and} \quad
+  \dot s (y; \theta, \phi / \omega) 
+  = \frac{\partial^2}{\partial \theta \partial \theta^\top} \log f
+\end{align*}
+are the gradient and Hessian matrix of $\log f$ with respect to $\theta$.
+
+:::
+
+From Exercise \ref{exr:notes-glm-moments} we immediately have
+\begin{align*}
+  \theta_i 
+  = (b')^{-1}(\mu_i)
+  = (b')^{-1}\{g^{-1}(x_i^\top\beta)\}
+\end{align*}
+provided that $b'$ and $g$ both have an inverse. Note that GLMs are
+*heteroskedastic models*, as $\Var(Y \mid \theta, \phi / \omega)$ depends on
+$\E(Y_i \mid \theta, \phi / \omega)$. In particular, we have
+\begin{align*}
+  \Var(Y \mid \theta, \phi / \omega)
+  =
+  \frac{\phi}{\omega} b''(\theta)
+  =
+  \frac{\phi}{\omega} b''\{(b')^{-1}(\mu)\}
+  =
+  \frac{\phi}{\omega} V(\mu).
+\end{align*}
+The function $V(\mu) = b''\{(b')^{-1}(\mu)\}$ is sometimes called the *variance
+function* of the GLM.
+
+:::{.myexercise data-latex="[Variance Functions]"}
+
+Show the following.
+
+a. For the Poisson regression model, $V(\mu) = \mu$.
+
+b. For the binomial proportion regression model, $V(\mu) = \mu(1 - \mu)$.
+
+:::
+
+:::{.myexercise data-latex="[Existence of Necessary Inverse]"}
+
+Argue (informally) that there exists an inverse function for $b'(\theta)$
+provided that $\Var(Y \mid \theta, \phi) > 0$ for all $(\theta, \phi)$.
+
+:::
+
+:::{.myexercise data-latex="[Sanity Check]"}
+
+To convince yourself of the correctness of Exercise \ref{exr:notes-glm-moments},
+use the results to compute the mean and variance of the $\Normal(\mu, \sigma^2)$
+and $\Gam(\alpha, \beta)$ distributions.
+
+:::
+
+:::{.myexercise data-latex="[Canonical Link Function, label = exr:canonical]"}
+
+To specify a GLM we must choose the so-called *link function* $g(\mu)$. A convenient choice (for reasons we will discuss later) is $g(\mu) = (b')^{-1}(\mu)$. This is known as the *canonical link*. By definition this gives the model
+\begin{align*}
+  f(y_i \mid x_i, \omega_i, \theta, \phi)
+  =
+  \exp\left\{ 
+    \frac{y_i x_i^\top \beta - b(x_i^\top \beta)}{\phi / \omega_i} + 
+    c(y_i ; \phi / \omega_i) \right\},
+\end{align*}
+i.e., we use the exponential dispersion family with $\theta_i = x_i^\top\beta$.
+
+a. Show $Y \sim \Normal(\mu, \sigma^2)$ has the identity as the canonical link
+   $g(\mu) = \mu$.
+
+b. Show $Y \sim \Poisson(\lambda)$ has the log-link as the canonical link
+   $g(\mu) = \log \mu$.
+
+c. Show that $Y = Z / n$ with $Z \sim \Binomial(n, p)$ has the logit link as the
+   canonical link $g(\mu) = \log\{\mu / (1 - \mu)\}$.
+
+d. Show that $Y \sim \Gam(\alpha,\beta)$ has the inverse as the canonical link
+   $g(\mu) = -1/\mu$.
+
+e. The canonical link for gamma GLMs (while commonly used in some fields) is
+   used far less than for other types of GLMs, for one very good reason. What is
+   that reason?
+
+:::
+
+# Fitting GLMs in `R`
+
+We can fit GLMs in `R` via maximum likelihood by using the `glm` command; generally, fitting a GLM will look like this
+
+```{r, eval = FALSE}
+my_glm <- glm(
+  response ~ predictor_1 + predictor_2 + and_so_forth,
+  data = my_data,
+  family = my_family
+)
+```
+
+The `family` argument tells `R` which type of GLM to fit: we will mostly use
+`family = binomial` for logistic regression or `family = poisson` for Poisson
+regression. It is also possible to change the link function with the `family`
+command; for example, doing `family = binomial("probit")` corresponds to fitting
+a binomial GLM using the _probit_ link $g(\mu) = \Phi^{-1}(\mu)$ where $\Phi(z)$
+is the cdf of a standard normal distribution (more on specific settings for link
+functions later). You can get information on all the options by running `?glm`
+in the `R` console.
+
+The easiest way to fit a GLM in the Bayesian paradigm is probably to use the `rstanarm` package in `R`. 
+
+```{r, eval = FALSE}
+install.packages("rstan")
+install.packages("rstanarm")
+```
+
+After installing the package we can fit GLMs using something like this:
+
+```{r, eval = FALSE}
+my_glm <- rstanarm::stan_glm(
+  response ~ predictor_1 + predictor_2 +  and_so_forth, 
+  data = my_data,
+  family = my_family
+)
+```
+
+The `rstanarm` package will use a "default" prior that places independent normal
+priors on the $\beta_j$'s, but this can be changed; see `?rstanarm::stan_glm`
+for details on the priors that are available. The default priors are designed to
+give reasonable answers across a wide variety of problems encountered in
+practice.
+
+# Logistic Regression
+
+A particular case of a GLM takes
+\begin{align*}
+  Y_i = Z_i / n_i \qquad \text{where} \qquad Z_i \sim \Binomial(n_i, p_i).
+\end{align*}
+When used with the canonical link of Exercise \ref{exr:canonical} we arrive at the _logistic regression model_
+\begin{align*}
+  p_i = \frac{\exp(x_i^\top \beta)}{1 + \exp(x_i^\top \beta)}.
+\end{align*}
+Defining $\logit(p) = \log\{p / (1 - p)\}$, we equivalently can express the model as
+\begin{align*}
+  \logit(p_i) = x_i^\top\beta.
+\end{align*}
+This model is referred to as the *logistic regression model*, and it is used to
+model outcomes that correspond to counts from a binomial experiment (i.e.,
+repeatedly flipping a coin $n_i$ times with probability $p_i$ of heads). The
+special case $n_i = 1$ is also common, in which case the outcomes $Y_i$ are
+*binary*.
+
+## What the Coefficients Represent
+
+:::{.myexercise data-latex="[Logistic Regression Coefficients]"}
+
+Suppose we fit a logistic regression model $\logit(p_i) = \beta_0 + \beta_1
+X_{i1} + \beta_2 X_{i2}.$ Logistic regression models are often interpreted in
+terms of *odds ratios*; the odds of success of observational unit $i$ relative
+to $i'$ is given by
+\begin{align*}
+  \frac{\Odds(Y_i = 1 \mid X_i)}{\Odds(Y_{i'} = 1 \mid X_{i'})}
+  = \frac{\Pr(Y_i = 1 \mid X_i) \, \Pr(Y_{i'} = 0 \mid X_{i'})}
+         {\Pr(Y_i = 0 \mid X_i) \, \Pr(Y_{i'} = 1 \mid X_{i'})}
+\end{align*}
+Show that, if $X_i$ and $X_{i'}$ are identical except that $X_{i2} = X_{i'2} +
+\delta$, then the odds ratio is given by $e^{\beta_2 \delta}$. That is *shifting
+a covariate by $\delta$ has a multiplicative effect on the odds of success,
+inflating the odds by a factor of $e ^{\beta_2\delta}$.*
+
+:::
+
+## Bernoulli Regression: The Challenger Shuttle Explosion
+
+On January $28^{\text{th}}$, 1986, the space shuttle Challenger broke apart just
+after launch, taking the lives of all seven crew members. This example is taken
+from an article by Dalal et al. (1989), which examined whether the incident
+should have been predicted, and hence prevented, on the basis of data from
+previous flights. The cause of failure was ultimately attributed to the failure
+of a crucial shuttle component know as the O-rings; these components had been
+tested prior to the launch to see if they could hold up under a variety of
+temperatures.
+
+The dataset `Challenger.csv` consists of data from test shuttle flights. This
+can be loaded using the following commands.
+
+```{r challenger, message = FALSE}
+library(tidyverse)
+
+f <- str_c("https://raw.githubusercontent.com/theodds/",
+           "SDS-383D/main/Challenger.csv")
+
+challenger <- read.csv(f) %>%
+  drop_na() %>%
+  mutate(Fail = ifelse(Fail == "yes", 1, 0))
+
+head(challenger)
+```
+
+**Our Goal:** The substantive question we are interested in is whether those in
+charge of the Challenger launch should have known that the launch was dangerous
+and delayed it until more favorable weather conditions. In fact, engineers
+working on the shuttle had warned beforehand that the O-rings were more likely
+to fail at lower temperatures. **Concretely, we are interested in knowing what
+the probability of an O-ring failure would be if we repeated the Challenger
+launch under similar conditions.**
+
+**Our Model:** To help answer our substantive question, we will consider a model
+for whether an O-Ring failure occurred on a given flight ($Y_i = 1$ if an
+O-ring failed, $Y_i = 0$ otherwise) given the temperature $\texttt{temp}_i$.
+The most general model we could use would be $p_i = f(\texttt{temp}_i)$ for
+some function $f(\cdot)$; there is nothing wrong with this per-se, but it is
+useful to consider a model with a more interpretable structure
+\begin{align*}
+  \logit(p_i) = \beta_0 + \beta_{\text{temp}} \times \text{temp}_i.
+\end{align*}
+In `R` we can fit the this model by maximum likelihood as follows.
+
+```{r glm-fitchallenger}
+challenger_fit <- glm(
+  Fail ~ Temperature,
+  data = challenger,
+  family = binomial
+)
+```
+
+One way to extract information out of a fitted GLM is to use the `summary`
+function:
+
+```{r}
+summary(challenger_fit)
+```
+
+The main parts of the output we are interested in are the columns `Estimate`
+which gives the maximum likelihood estimates of $\beta_0$ (`Intercept`) and
+$\beta_1$ (`Temperature`), `Std. Error` which gives an estimate of the standard
+error of the MLEs, and the last column which gives a $P$-value for the test that
+these coefficients are equal to zero. The rest of the output, while important,
+is not of direct interest to us at the moment.
+
+__Familiarize yourself with the functions `coef`, `vcov`, and `confint` in
+addition to `summary`; what do these functions do?__ _Note: generally speaking,
+the $P$-values in the output of `summary` are not the best ones, and it is
+better to base inference on likelihood ratio tests, which we will discuss in a
+future lecture. Similarly, don't get confidence intervals by adding/subtracting
+two standard errors, use the `confint` function instead, which inverts a
+likelihood ratio test and will be discussed in detail later._
+
+Predictions from the logistic regression model can be obtained using the `predict` function:
+
+```{r}
+predict(challenger_fit,
+        newdata = data.frame(Temperature = c(40, 50, 60)),
+        type = 'response',
+        se.fit = TRUE)
+```
+
+A Bayesian version can also be fit as follows.
+
+```{r glm-bayeschallenger, challenger_fit, message=FALSE, results = 'hide', cache=TRUE}
+challenger_bayes <- rstanarm::stan_glm(
+  Fail ~ Temperature,
+  data = challenger,
+  family = binomial
+)
+```
+
+__Note: please step through these lines of code below on your own to make sure you
+understand what each line is doing!!! Inspect the objects on your own as well.__
+
+Using the Bayesian version, let's plot the samples of the function
+\begin{align*}
+  f(\texttt{temp}) = \{1 + \exp(-\beta_0 - \beta_1 \texttt{temp})\}^{-1}.
+\end{align*}
+We select $200$ of the $4000$ posterior samples at random for display purposes.
+I highly encourage you to step through this code on your own to understand what
+each line does.
+
+```{r glm-bayes-postpred, fig.align='center', fig.cap="Posterior samples of the probability of failure.\\label{fig:glm-bayes-postpred}", cache = TRUE}
+
+## For Reproducibility
+set.seed(271985)
+
+## Converts the rstanarm object to a matrix
+beta_samples <- as.matrix(challenger_bayes)
+
+## Some Colors
+pal <- ggthemes::colorblind_pal()(8)
+
+## Set up plotting region
+plot(
+  x = challenger$Temperature, 
+  y = challenger$Fail, 
+  ylab = "Failure?",
+  xlab = "Temperature",
+  type = 'n'
+)
+
+## A function for adding estimate
+plot_line <- function(beta, col = 'gray') {
+  plot(function(x) 1 / (1 + exp(-beta[1] - beta[2] * x)), 
+       col = col, add = TRUE, xlim = c(40, 90), n = 200)
+}
+
+## Apply plot_line for a random collection of betas
+tmpf <- function(i) plot_line(beta_samples[i,])
+tmp <- sample(1:4000, 200) %>% lapply(tmpf)
+
+## Get the Bayes estimate of the probability
+tempgrid <- seq(from = 40, to = 90, length = 200)
+bayes_est <- predict(challenger_bayes, 
+  type = 'response', 
+  newdata = data.frame(Temperature = tempgrid)
+)
+lines(tempgrid, bayes_est, col = pal[3], lwd = 4)
+
+## Adding the observations
+points(
+  x = challenger$Temperature, 
+  y = challenger$Fail, 
+  pch = 20, 
+  col = pal[4]
+)
+```
+
+Samples are given in Figure \ref{fig:glm-bayes-postpred}. We see that our
+Bayesian robot believes that it is extremely unlikely that lower temperatures
+are associated with a higher chance of failure and, indeed, that in most cases
+the failure of the O-rings is basically a foregone conclusion. On the day of the
+launch, the temperature was forecast to be 30 degrees, well below any of the
+experimental data. While we should always be wary of extrapolating beyond the
+range of our data, our robot would have made the following prediction for the
+probability of failure.
+
+```{r, glm-bayes-predict, cache = TRUE}
+predict(challenger_bayes, 
+        newdata = data.frame(Temperature = 30), 
+        type = 'response')
+```
+
+That is, the robot believes that the shuttle will experience an O-ring failure
+with probability roughly 98%.
+
+# Poisson Log-Linear Models
+
+Another particular case of the generalized linear model takes
+\begin{align*}
+  Y_i \sim \Poisson(\mu_i)
+  \qquad
+  \text{where}
+  \qquad
+  \log(\mu_i) = x_i^\top\beta.
+\end{align*}
+This is referred to as a *Poisson log-linear model*. Equivalently, we have
+$\mu_i = \exp(x_i^\top \beta)$. 
+
+Recall that a Poisson distribution is often used to model the *number of times
+an event occurs in a given time, or within a given space.* For example, it might
+be used to model the number of homicides in a city over a year, the number of
+goals scored in a soccer game, etc. This is used to model outcomes that are
+*counts* taking values in $0, 1, 2, \ldots$ with no obvious upper bound.
+
+## What the Coefficients Represent
+
+:::{.myexercise data-latex="[Coefficients in a Poisson Regression]"}
+
+Suppose we fit a Poisson log-linear model $\log(\mu_i) = \beta_0 + \beta_{i1}
+X_{i1} + \beta_{i2} X_{i2}$. Show that a change in $X_{i2}$ by $\delta$ units,
+holding $X_{i1}$ fixed, results in a *multiplicative effect on the mean*:
+\begin{align*}
+  \mu_{\text{new}} = e^{\beta_2\delta} \mu_{\text{old}}
+\end{align*}
+
+:::
+
+## Poisson Log-Linear Regression: The Ships Dataset
+
+This example is taken from Section 6.3.2 of McCullaugh and Nelder (1989). We
+consider modeling the rate of reported damage incidents of certain types of
+cargo-carrying ships. The data is available in the \texttt{MASS} package and can
+be loaded as follows.
+
+```{r}
+ships <- MASS::ships
+head(ships)
+```
+
+The variable `type` refers to the type of vessel, `year` to year in which the
+vessel was constructed, `period` to the period of time under consideration, and
+`service` to the number of months of service of all vessels of this type. The
+response of interest, `incidents`, refers to the total number of damage
+incidents which occurred during the period across *all* vessels constructed in
+year `year` and of type `type`; the reason for this pooling is that it is
+assumed that incidents occur according to a *Poisson process* with no
+ship-specific effects (possibly a dubious assumption, but it is all we can do
+with the data we have been given).
+
+We are interested in three questions:
+
+1. Do certain types of ships tends to have higher numbers of incidents, after
+   controlling for other factors?
+
+2. Were some periods more prone to other incidents, after controlling for other
+   factors?
+
+3. Did ships built in certain years have more accidents than others?
+
+One possible choice of model we could use is a Poisson log-linear model of the
+form $\texttt{incidents}_i \sim \Poisson(\mu_i)$ with
+\begin{align*}
+  \log \mu_i
+  =
+  \beta_0 +
+  \beta_{\texttt{service}} \cdot \texttt{service}_i +
+  \beta_{\texttt{type}}\cdot\texttt{type}_i +
+  \beta_{\texttt{period}} \cdot \texttt{period}_i +
+  \beta_{\texttt{year}} \cdot \texttt{year}_i.
+\end{align*}
+This model is fine, but we actually have more information about how to
+incorporate `service`: consider two ships, one of which was at service for 6
+months and the other for a year, but which are otherwise identical. If the
+incidents really follow a homogeneous Poisson process, we would expect that the
+second ship has *twice as many* incidents as the first, on average. If this is
+the case, we should prefer the model
+\begin{align*}
+  \log \mu_i
+  =
+  \beta_0 +
+  \log (\texttt{service}_i) +
+  \beta_{\texttt{type}}\cdot\texttt{type}_i +
+  \beta_{\texttt{period}} \cdot \texttt{period}_i +
+  \beta_{\texttt{year}} \cdot \texttt{year}_i.
+\end{align*}
+Equivalently, we have $\mu_i = \texttt{service}_i \cdot \eta_i$ where $\eta_i$
+does not depend on $\texttt{service}_i$, giving the desired effect: doubling
+$\texttt{service}_i$ will double the mean. The term $\log(\texttt{service}_i)$
+is called an *offset*; terms of this nature are very common in Poisson GLMs.
+
+We can fit this model by maximum likelihood as follows.
+
+```{r glm-ships-sum, cache = TRUE}
+ships_glm <- glm(
+  incidents ~ type + factor(period) + factor(year),
+  family = poisson,
+  offset = log(service),
+  data = dplyr::filter(ships, service > 0)
+)
+
+print(summary(ships_glm))
+```
+
+Notice that, like with a linear model or an ANOVA model, when controlling for
+categorical predictors we set one of the levels of the predictor to be a
+"reference" level. That is why we get coefficients for `typeB` through `typeE`,
+but not `typeA` as the `A` type is assumed to have a coefficient equal to zero.
+
+From this we see that there is substantial evidence for the relevance of all
+variables. There is quite strong evidence for an effect of period, with a period
+of 75 being associated with more incidents. Similarly, it seems that incidents
+are particularly low for ships operating in year 60 relative to other years.
+Finally, there is evidence for differences across types of ships, with (for
+example) B having fewer incidents than A.
+
+:::{.myexercise data-latex="[Bayesian Poisson Loglinear Model]"}
+
+Fit this function using `stan_glm`, then try out the `plot` function for `stanreg` objects. Describe your results.
+
+:::
+
+:::{.myexercise data-latex="[Overdispersion]"}
+
+A problem with Poisson log-linear models is that they impose the restriction
+$\E(Y_i) = \Var(Y_i)$ so that the variance is completely constrained by the
+mean. Count data is referred to as *overdispersed* if $\Var(Y_i) > \E(Y_i)$.
+
+a. Consider the model $Y \sim \Poisson(\lambda)$ (given $\lambda$) and $\lambda
+   \sim \Gam(k, k/\mu)$. Find the mean and variance of $Y$. Is $Y$ overdispersed?
+
+b. Show that $Y$ marginally has a negative binomial distribution with $k$
+   failures and success probability $\mu / (k + \mu)$; recall that the negative
+   binomial distribution has mass function
+   \begin{align*}
+     f(y \mid k, p) = 
+     \binom{k + y - 1}{y} p^y (1 - p)^k.
+   \end{align*}
+
+c. The following data is taken from Table 14.6 in Categorical Data Analysis, 3rd
+   edition, by Alan Agresti.
+   
+   ```{r}
+   poisson_data <- data.frame(
+     Response = 0:6,
+     Black = c(119,16,12,7,3,2,0),
+     White = c(1070,60,14,4,0,0,1)
+   )
+   knitr::kable(poisson_data, booktabs = TRUE)
+   ```
+   
+   The data is from a survey of 1308 people in which they were asked how many
+   homicide victims they know. The variables are `response`, the number of
+   victims the respondent knows, and `race`, the race of the respondent (black
+   or white). The question is: to what extend does race predict how many
+   homicide victims a person knows?
+   
+   For this data, is it true that the mean outcome (for either black or white
+   individuals) is approximately equal to its variance? If not, do we see
+   overdispersion or underdispersion?
+
+d. Using the fact that the variance of $Y_i$ under a negative binomial is $\mu +
+   \mu^2 / k$, compute an estimate of $k$ for Black and White individuals for
+   the two groups. Does the same value of $k$ seem appropriate for both groups,
+   or does on group seem to have a larger value of $k$ than the other? (Don't
+   worry about quantifying uncertainty in this assessment.)
+
+:::
+
