@@ -4,7 +4,7 @@ Welcome to SDS 383D for Spring 2022, a Ph.D.-level course on statistical modelin
 
 Some course logistics
 - Instructor: Antonio Linero, <http://theodds.github.io>
-- Meets: Mondays and Wednesday, 1:00 to 2:30 PM
+- Meets: Monday and Wednesday, 1:00 to 2:30 PM
 - Classroom: UTC 4.120
 - Office hours: Tuesday and Thursday, 1-2 PM, via Zoom (link on Canvas).
 
@@ -14,33 +14,36 @@ Some course logistics
 
 ## About the course
 
-This course is about building probabilistic models for real-world systems. Our
-approach will _primarily_, although not exclusively, be Bayesian.
+This course is about building probabilistic models for real-world systems. We
+will use a mix of both Bayesian (e.g., specifying a model and prior and then
+computing the posterior distribution via simulation) and Frequentist (e.g.,
+computing an M-estimator of some quantity of interest and then estimating its
+sampling distribution using asymptotics) inference methods.
 
-Formally, this course has SDS 383C as a prerequisite. But plenty of students
+Formally, this course has SDS 383C as a prerequisite. But, plenty of students
 have succeeded in the past without having taken that course. So here's a list of
 substantive prerequisites. To succeed, you need to know the following topics:
 - linear algebra
 - how to perform basic data-analysis tasks in R or Python, at the level of
   Lessons 1-7 in [this undergraduate text](https://bookdown.org/jgscott/DSGI/).
 - multivariable calculus. To be more specific, we lean often on gradients,
-Hessians, and Jacobians, but not on more physics-relevant tools like divergence,
-curl, Green's theorem, etc. 
-- undergraduate probability (measure theory
-isn't necessary). You should be comfortable writing down PDFs and understanding
-what they mean. You should have seen moment-generating functions and the
-change-of-variable formula involving Jacobians. 
+  Hessians, and Jacobians, but not on more physics-relevant tools like
+  divergence, curl, Green's theorem, etc.
+- undergraduate probability (measure theory isn't necessary). You should be
+  comfortable writing down PDFs and understanding what they mean. You should
+  have seen moment-generating functions and the change-of-variable formula
+  involving Jacobians.
 - basic inferential statistics: sampling distributions, confidence intervals,
-p-values, etc.
+  p-values, etc.
 - basic regression, at the level of Lessons 14-15 of [this undergraduate
-text](https://bookdown.org/jgscott/DSGI/)
+  text](https://bookdown.org/jgscott/DSGI/)
 
 If you have any doubt about your preparation for this course, feel free to chat
 with me on the first day.
 
 This is a blend between a traditional lecture-based course and a flipped
-classroom. Some of the time is spend on lectures in class. But a lot of the
-other class time is spent with you in charge. You will work on the [exercises
+classroom. Some of the time is spent on lectures in class. But a lot of the
+other class time will be student led. You will work on the [exercises
 outside of class](Notes/). When you come to class, you will share what
 you've done, and benefit from understanding what others have done. We will end
 up covering less than in an exclusively lecture-based course. But what you
@@ -56,7 +59,7 @@ participation.
 **Homework will be due on the first class day of each month.** To lighten the
 burden, we will divide into groups of three each month (groups will not be
 allowed to overlap in subsequent months). **Groups will be randomly selected to
-present exercises for various problems, with code supporting code included,
+present exercises for various problems, with supporting code included,
 throughout the semester.** At the end of each lecture, I will give a list of
 homework problems that I may ask you to present a solution to during the
 next lecture, but it is expected that you and your group will do all of the
@@ -72,7 +75,7 @@ As far as how submissions should look:
 
 1. For mathematics questions, I'm fine with you turning in hand-written
    solutions, provided that you answer the questions using complete sentences.
-   Answers should not consist of just of long strings of calculations with no
+   Answers should not consist of just long strings of calculations with no
    comments; you need to explain what you are doing.
    
 2. For data analysis or coding questions, I expect results to be typed up with
@@ -116,7 +119,7 @@ covered in class. Implement the method(s) and benchmark it (them) against
 something else.
 
 Final projects are due on the day of the university-scheduled exam: Friday, May
-4th.
+4th, 2024.
 
 Note: you should feel free to work either solo or in pairs for the projects.
 
@@ -124,8 +127,7 @@ Note: you should feel free to work either solo or in pairs for the projects.
 
 We will use `R` and `RStudio` in class. Because of the group-work aspect of this
 class, and the fact that we will be presenting solutions, it is important that
-we all have at least the language in common, so I won't accept code written in
-other languages. Sorry!
+we all have at least the language in common, therefore I request that all code be written in `R`. Sorry!
 
 **I am happy to assist with programming issues, especially if you haven't used
 `R` before, but it is your responsibility to either learn this material on your
