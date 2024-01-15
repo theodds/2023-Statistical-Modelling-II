@@ -1,6 +1,8 @@
 \usepackage[most]{tcolorbox}
 \usepackage{bm}
 
+\definecolor{mygray}{gray}{0.9}
+
 \newtcolorbox[auto counter]{myexample}[1][]{
   breakable,
   title=Example~\thetcbcounter: #1,
@@ -11,6 +13,21 @@
   boxrule=0pt, % no real frame,
   % colframe=lightgray,
   colbacktitle=lightgray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced jigsaw
+}
+
+\newtcolorbox[auto counter]{mytheorem}[1][]{
+  breakable,
+  title=Theorem~\thetcbcounter: #1,
+  sharp corners,
+  before upper=\setlength{\parskip}{5pt},
+  % borderline west={2pt}{0pt}{olive}, % straight vertical line at the left edge
+  colback=mygray,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
+  colbacktitle=mygray,
   coltitle=black,
   fonttitle=\bfseries,
   enhanced jigsaw
