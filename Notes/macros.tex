@@ -13,16 +13,33 @@
   enhanced
 }
 
+% \newtcolorbox[auto counter]{exercise}[1][]{%
+%   breakable,
+%   enhanced jigsaw, % better frame drawing
+%   borderline west={2pt}{0pt}{red}, % straight vertical line at the left edge
+%   sharp corners, % No rounded corners
+%   boxrule=0pt, % no real frame,
+%   fonttitle={\large\bfseries},
+%   coltitle={black},  % Black colour for title
+%   title={Exercise:\ },  % Fixed title
+%   attach title to upper, % Move the title into the box
+%   #1
+% }
+
 \newtcolorbox[auto counter]{myexercise}[1][]{
   breakable,
   title=Exercise~\thetcbcounter: #1,
+  sharp corners,
   before upper=\setlength{\parskip}{5pt},
+  borderline west={2pt}{0pt}{cyan}, % straight vertical line at the left edge
   colback=white,
-  colframe=black,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
   colbacktitle=lightgray,
   coltitle=black,
   fonttitle=\bfseries,
-  enhanced
+  enhanced jigsaw
+  % frame hidden
 }
 
 \newtcolorbox[auto counter]{definition}[1][]{
