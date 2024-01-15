@@ -3,6 +3,8 @@
 *.synctex.gz
 *.pdf-view-restore
 *.el
+*.fls
+*.fdb_latexmk
 *ltximg/
 Notes/Week-2_cache/
 Notes/Week-2_files/
