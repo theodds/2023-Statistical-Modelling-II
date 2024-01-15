@@ -3,14 +3,17 @@
 
 \newtcolorbox[auto counter]{myexample}[1][]{
   breakable,
-  before upper=\setlength{\parskip}{5pt},
   title=Example~\thetcbcounter: #1,
+  sharp corners,
+  before upper=\setlength{\parskip}{5pt},
+  borderline west={2pt}{0pt}{olive}, % straight vertical line at the left edge
   colback=white,
-  colframe=black,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
   colbacktitle=lightgray,
   coltitle=black,
   fonttitle=\bfseries,
-  enhanced
+  enhanced jigsaw
 }
 
 % \newtcolorbox[auto counter]{exercise}[1][]{%
@@ -45,13 +48,16 @@
 \newtcolorbox[auto counter]{definition}[1][]{
   breakable,
   title=Definition~\thetcbcounter: #1,
+  sharp corners,
   before upper=\setlength{\parskip}{5pt},
-  colback=blue!5!white,
-  colframe=black,
+  borderline west={2pt}{0pt}{violet}, % straight vertical line at the left edge
+  colback=white,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
   colbacktitle=lightgray,
   coltitle=black,
   fonttitle=\bfseries,
-  enhanced
+  enhanced jigsaw
 }
 
 \makeatletter
