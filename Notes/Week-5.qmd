@@ -46,7 +46,7 @@ An important justification for using the asymptotic properties of the likelihood
 is that the model is correctly specified. The model might be misspecified in
 (at least) three ways:
 
-- Maybe we misspecified the stochastic component of the model, e.g.,, we assumed
+- Maybe we misspecified the stochastic component of the model, e.g., we assumed
   $Y_i$ was Poisson but really it was negative binomial.
 
 - Maybe we misspecified the systematic component, e.g., maybe we omitted some
@@ -88,8 +88,7 @@ arbitrary) non-linear functionals of our data generating process?__
 
 It is not always possible, given a sample $\Data \sim G$, to determine the
 sampling distribution of a statistic $T = T(\Data)$. This is because we do not
-know the distribution of $G$; of course, if we knew $G$, we would not need to do
-any inference.
+know $G$; of course, if we knew $G$, we would not need to do any inference.
 
 The bootstrap gets around this problem by using the data to estimate $G$ from
 the data to obtain some $\widehat G$. Given $\widehat G$, we can compute the
