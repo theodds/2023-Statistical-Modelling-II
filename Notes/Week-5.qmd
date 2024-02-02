@@ -1,0 +1,362 @@
+---
+title: "Week 5 Notes: The Bootstrap"
+format:
+  pdf:
+    include-in-header:
+      - file: macros.tex
+    keep-tex: true
+number-depth: 1
+number-sections: true
+---
+
+The contents of this week of notes are based largely on Chapter 8 of _All of
+Statistics_ by Larry Wasserman.
+
+# Some Motivation
+
+## Our Goalposts
+
+Recall that the goal of Frequentist inference is to obtain estimators,
+intervals, and hypothesis tests that have strong properties with respect to the
+_sampling_ distribution (as opposed to the posterior distribution). Given data
+$\Data$ a Frequentist approach might be to construct an interval estimate for a
+parameter $\psi$ such that
+$$
+  G_\theta\{L(\Data) \le \psi \le U(\Data)\} = 1 - \alpha,
+$$
+for a desired _confidence level_ $1 - \alpha$. Such intervals are often of the
+form $\widehat\psi \pm z_{\alpha/2} \, s_{\widehat\psi}$, where where $\widehat
+\psi$ is a point estimate, $s_{\widehat \psi}$ is an estimate of the standard
+deviation of $\widehat \psi$, and $z_{\alpha/2}$ corresponds to an appropriate
+quantile of the standard normal distribution. While rarely possible, we would
+like coverage to hold exactly and without depending on $\theta$.
+
+
+## Misspecified GLMs
+
+For the past several weeks, we have been learning about how to perform inference
+using generalized linear models (GLMs). In particular, we have learned about how
+to construct confidence intervals and perform hypothesis tests using the
+_asymptotic properties_ of the likelihood, which allow us to derive sampling
+distributions like $\widehat \beta \asim \Normal\{\beta_0,
+\Fisher(\beta_0, \phi_0)^{-1}\}$, where $(\beta_0, \phi_0)$ are the "true"
+values of the regression parameters $\beta$ and dispersion parameter $\phi$.
+
+An important justification for using the asymptotic properties of the likelihood
+is that the model is correctly specified. The model might be misspecified in
+(at least) three ways:
+
+- Maybe we misspecified the stochastic component of the model, e.g.,, we assumed
+  $Y_i$ was Poisson but really it was negative binomial.
+
+- Maybe we misspecified the systematic component, e.g., maybe we omitted some
+  covariates or the "linear predictor" is actually a nonlinear function of the
+  covariates.
+
+- Maybe the link function was specified incorrectly, e.g., maybe we should have
+  used a log link rather than the logit link in a binomial regression.
+
+In the first case, where the stochastic component is misspecified, note that
+even though the model is misspecified it still makes sense to try to estimate
+$\beta$. It turns out, however, that the MLE $\widehat \beta$ will still
+generally be asymptotically normal and centered on $\beta_0$, but the asymptotic
+variance will no longer be given by $\Fisher(\beta_0, \phi_0)^{-1}$. _Question:_
+__is there a simple procedure that will automatically let us estimate the
+correct variance of the MLE even under this type of model misspecification?__
+
+## Complicated Sampling Distributions
+
+More generally, given a statistic $T = T(\Data)$, one might want an automatic
+procedure for obtaining the sampling distribution of $T$, while making minimal
+assumptions about the data generating process. For example, consider the iid
+sampling model $X_1, \ldots, X_N \iid F$. We might aim to construct a confidence
+interval for, say, the median of $F$, or a robust measure of scale like the
+median absolute deviation $\text{MAD} = \text{median}(|X - \text{median}(X)|)$.
+For _non-linear functionals_ $\psi(F)$ (see below for a definition of a linear
+functional) of the data generating process $F$ this may not be straight-forward
+to obtain (e.g., the median, inter-quartile range, MAD, standard deviation).
+
+A general approach for obtaining standard errors and confidence intervals for
+non-linear functionals is the _functional delta method_, which I am not going to
+cover; suffice to say, it is a generalization of the delta method that is
+applicable a bit more generally, but is inconvenient in that we often have to
+sit down and do some math to get it to work. _Question:_ __is there a simple
+procedure that will give us reasonable inference for arbitrary (or nearly
+arbitrary) non-linear functionals of our data generating process?__
+
+# The Bootstrap Principle
+
+It is not always possible, given a sample $\Data \sim G$, to determine the
+sampling distribution of a statistic $T = T(\Data)$. This is because we do not
+know the distribution of $G$; of course, if we knew $G$, we would not need to do
+any inference.
+
+The bootstrap gets around this problem by using the data to estimate $G$ from
+the data to obtain some $\widehat G$. Given $\widehat G$, we can compute the
+sampling distribution of $T^\star = T(\Data^\star)$ where
+$\Data^\star \sim \Ghat$.
+
+> __The Bootstrap Principle:__
+  Suppose that $\Data \sim G$, $\psi = \psi(G)$ is some parameter of the
+  distribution $G$ of interest, and $T = T(\Data)$ is some statistic aimed at
+  estimating $\psi$. Then we can evaluate the sampling distribution of
+  $T(\Data)$ by
+>
+>  1. estimating $G$ with some $\Ghat$; and
+>
+> 2. using the sampling distribution of $T^\star = T(\Data^\star)$ as an
+     estimate of the sampling distribution of $T$, where $\Data^\star \sim
+     \Ghat$.
+
+Implementing the bootstrap principle has two minor complications. First, how do
+we estimate $G$? Second, how do we compute the sampling distribution of
+$T(\Data^\star)$?
+
+How we estimate $G$ typically depends on the structure of the problem. Suppose,
+for example, that $\Data = (X_1, \ldots, X_N)$ which are sampled iid from $F$
+(so that $G = F^N$). Then a standard choice is to use the empirical distribution
+function $\Fhat = \EmpF_N = N^{-1} \sum_{i=1}^N \delta_{X_i}$ where $\delta_x$
+is the point mass at $x$ (so that $\Ghat = {\Fhat}^N$); this is referred to as
+the _nonparametric bootstrap_ because it does not depend on any parametric
+assumptions about $F$. Alternatively, we could estimate $F$ using a _parametric_
+model: that is, we may set $\widehat F = F_{\widehat \theta}$ where $\widehat
+\theta$ is the maximum likelihood estimate of $\theta$ in some parametric family
+$\{F_\theta : \theta \in \Theta\}$. This is referred to as the _parametric
+bootstrap_. Other methods for estimating $F$ lead to different bootstrap
+procedures that may be more appropriate in any given situation (such as the
+_residual bootstrap_ if you are willing to make some assumptions about the
+correctness of the regression model, or the _block bootstrap_ for time-series
+data).
+
+In all but the simplest settings, Monte Carlo is used to approximate the
+sampling distribution of $T^\star$. That is, we sample $\Data^\star_1,
+\ldots, \Data^\star_B$ independently from $\Ghat$ and take $\frac{1}{B}
+\sum_{b=1}^B \delta_{T^\star_b}$ as our approximation of the sampling
+distribution of $T$, where $T^\star_b = T(\Data^\star_b)$.
+
+
+:::{.myexercise data-latex="[Bootstrapping Linear Functionals]"}
+  
+  Suppose that $X_1, \ldots, X_N \iid F$ and let $\psi(F)$ denote the population
+  mean of $F$, i.e., $\psi(F) = \E_F(X_i) = \int x \, F(dx)$. We consider
+  bootstrapping the sample mean $\bar X_N = N^{-1} \sum_{i=1}^N X_i$ using the
+  approximation $\widehat F = \mathbb F_N$. That is, we consider the sampling
+  distribution of $\bar X^\star = N^{-1} \sum_{i=1}^N X_i^\star$ where
+  $X_1^\star, \ldots, X_N^\star$ are sampled independently from $\mathbb F_N$.
+  __Note: none of the answers to these questions involve considering simulated
+  datasets.__
+  
+  a. What is $\psi(\mathbb F_N)$?
+  
+  b. The _actual_ bias of $\bar X_N$ is $\E_F\{\bar X_N - \psi(F)\} = 0$. What
+     is the _bootstrap estimate_ of the bias
+     $\E_{\mathbb F}(\bar X^\star_N - \bar X)$?
+     
+  c. The variance of $\bar X_N$ is $\sigma^2_F / N$ where $\sigma^2_F$ is 
+     $\Var_F(X_i)$. What is the _bootstrap estimate_ of the variance of
+     $\bar X$, $\Var_{\mathbb F_N}(\bar X^\star)$?
+      
+  d. A parameter $\psi$ is said to be _linear_ if it can be written as
+     $\psi(F) = \int t(x) \, F(dx)$ for some choice of $t(x)$. In this case
+     it is natural to estimate $\psi$ using $\bar T = N^{-1} \sum_i t(X_i)$.
+     Write down the bootstrap estimate of the bias and variance of $\bar T$
+     in this setting.
+
+:::
+
+# Bootstrap Variance Estimation
+
+The bootstrap can be used to approximate the variance (or standard deviation) of
+$T$ as follows:
+
+1. Draw $\Data^\star \sim \Ghat$ (for example, if $X_1, \ldots, X_N \iid F$ then
+   we take $X_1^\star, \ldots, X_N^\star \iid \mathbb F$). 
+2. Compute $T^\star = T(\Data^\star)$.
+3. Repeat steps 1 and 2 $B$ times to get $T^\star_1, \ldots, T^\star_B$.
+4. Let $v_{\text{boot}} = \frac{1}{B} \sum_{b=1}^B \left(T^\star_b - \bar
+   T\right)^2$ where $\bar T = \frac{1}{B} \sum_b T^\star_b$.
+
+Wasserman gives the following pseudo-code for estimating the variance of the
+sample median of $X_1, \ldots, X_N$:
+
+```{r, eval = FALSE}
+## Let X be a vector of size N, sampled from F
+T <- median(X)
+Tboot <- numeric(N)
+for(i in 1:B) {
+  ## Sample N iid draws from the empirical distribution of X
+  Xstar <- sample(x = X, size = N, replace = TRUE)
+  ## Save the result
+  Tboot[i] <- median(Xstar)
+}
+v_boot <- var(Tboot)
+se_boot <- sqrt(v_boot)
+```
+
+In addition to the sample median, Wasserman considers estimating the variance of
+the _sample skewness_ given by
+$$
+  \frac{\frac{1}{N} \sum_i (X_i - \bar X)^3}{s^3}
+$$
+where $s$ denotes the sample standard deviation and $\bar X$ the sample mean.
+
+# Types of Bootstrap Intervals
+
+## The Normal Interval
+
+Given the sampling distribution of $T$, we can do things like construct
+confidence intervals for $\psi$. For example, it is often the case that
+$T$ is asymptotically normal and centered at $\psi$. We can then use the
+bootstrap estimate of $\Var(T)$ to make the confidence interval
+$$
+\begin{aligned}
+  T \pm z_{\alpha/2} \sqrt{v_{\text{boot}}}.
+\end{aligned}
+$$
+This is a pretty commonly used approach, but you might guess it only works well
+if $T$ is approximately normal.
+
+## The Basic Percentile Interval
+
+A commonly-taught bootstrap-based $100(1 - \alpha)\%$ interval is to take
+$(T^\star_{\alpha / 2}, T^{\star}_{1 - \alpha / 2})$ where $T^\star_\gamma$
+denotes the $100\gamma^{\text{th}}$ percentile of $T^\star$ (which is again
+approximated by Monte Carlo). Pseudo-code for this approach would replace the
+pseudo-code for the variance estimation with
+
+```{r, eval = FALSE}
+quantile(Tboot, c(0.025, 0.975))
+```
+
+A downside of this approach is that, despite appearing simple, it is actually
+not very easy to justify; it sort of treats the samples of $T^\star$ as though
+they were _samples of $\psi$ from a posterior distribution_, and given that
+there are no priors/posteriors in sight this seems dubious.
+
+## Pivotal Intervals
+
+The next problem motivates the use of _pivotal intervals_. We recall the _delta
+method_ approach to computing standard errors. Suppose that $\muhat$ has mean
+$\mu$ and variance $\tau^2$ and that we want to approximate the mean and
+variance of $g(\muhat)$. The delta method states that, if $\tau$ is sufficiently
+small, then $\E\{g(\muhat)\} \approx g(\mu)$ and $\Var\{g(\muhat)\} \approx
+g'(\mu)^2 \tau^2$. This is based on the somewhat crude approximation
+$$
+  g(\muhat) \approx g(\mu) + (\muhat - \mu) g'(\mu) + \text{remainder}
+$$
+with the remainder being of order $O(\tau^2)$. The delta method approximation is
+obtained by ignoring the remainder.
+
+:::{.myexercise data-latex="[Bootstrapping a Log-Normal, label = exr:notes-boot-lognormal]"}
+
+  Let $X_1, \ldots, X_n \iid \Normal(\mu,1)$ and let $\psi = e^\mu$ and $T =
+  e^{\bar X_n}$ be the MLE of $\psi$. Create a dataset using $\mu = 5$
+  consisting of $n = 20$ observations.
+
+  (a) Use the delta method to get the standard error and 95\% confidence
+      interval for $\psi$.
+      
+  (b) Use the nonparametric bootstrap to get a standard error and 95\%
+      confidence interval for $\psi$ using the normal interval.
+      
+  (c) The _parametric bootstrap_ makes use of the assumption that $F$ (in this
+      case) is a normal distribution. Specifically, we take $\Fhat$ equal to its
+      maximum likelihood estimate, the $\Normal(\bar X_n, 1)$ distribution.
+      Using the parametric bootstrap, compute the standard error and a 95%
+      confidence interval for $\psi$.
+      
+  (d) Plot a histogram of the bootstrap replications for the parametric and
+      nonparametric bootstraps, along with the approximation of the sampling
+      distribution of $T$ from the delta method (i.e., $\Normal(T, \widehat
+      s^2)$). Compare these to the true sampling distribution of $T$. Which
+      approximation is closest to the true distribution?
+      
+  (e) Depending on the random data generated for this exercise, you most likely
+      will find that the sampling distribution of $T$ estimated by both the
+      bootstrap and the delta method are not so good; the biggest problem is
+      that the sampling distribution will be location-shifted by $T - \psi$.
+      Repeat part (d), but instead comparing the sampling distribution of
+      $T - \psi$ to the bootstrap estimates obtained by sampling
+      $T^\star - T$.
+
+:::
+
+The lesson of part (e) is that the bootstrap approximation is likely to be best
+when we apply it to _pivotal quantities_. A quantity $S(T, \psi)$ (which is
+allowed to depend on $\psi$) is said to be pivotal if it has a distribution that
+is independent of $\psi$. For example, in Exercise
+\ref{exr:notes-boot-lognormal} the statistic $\sqrt n(\bar X - \mu)$ is a
+pivotal quantity, and in general $Z = \frac{\sqrt n (\bar X - \mu)}{s}$ is
+asymptotically pivotal (where $s$ is the sample standard deviation).
+
+:::{.myexercise data-latex="[A Better Pivot]"}
+
+  While we saw an improved approximation for $T - \psi$, argue that this
+  is nevertheless not a pivotal quantity. Propose a pivotal quantity
+  $S(T, \psi)$ which is more suitable for bootstrapping.
+
+:::
+
+Both the normal and percentile intervals exercise rely on asymptotic normality,
+which we may like to avoid. An alternative approach is to apply the bootstrap to
+$\zeta = T - \psi(F)$ rather than to $T$ directly, so that $\psi(F) = T -
+\zeta$. If we knew the $\alpha/2$ and $(1 - \alpha/2)$ quantiles of $\zeta$
+(say, $\zeta_{\alpha/2}$ and $\zeta_{1-\alpha/2}$), then we could form a
+confidence interval
+$$
+\begin{aligned}
+    G_\theta(T - \zeta_{1-\alpha/2} 
+    \le \psi \le T - \zeta_{\alpha/2})
+    = 1 - \alpha.
+\end{aligned}
+$$
+The _empirical bootstrap_ (or _pivotal interval_) confidence interval estimates
+these quantiles from the quantiles of $T^\star - \psi(\Fhat)$, which are
+computed by simulation. More generally, we could use this approach for any
+pivotal quantity; for example, since $\xi = T / \psi$ is pivotal in Exercise
+\ref{exr:notes-boot-lognormal}, we could use the interval $(T /
+\xi_{1-\alpha/2}, T / \xi_{\alpha/2})$ as our interval. Roughly speaking, the
+closer that $S(T, \psi)$ is to pivotal, the better we expect the interval to
+perform.
+
+:::{.myexercise data-latex="[Better Bootstrap for Lognormal]"}
+  Use the nonparametric bootstrap to make a 95\% confidence interval using the
+  pivotal quantity $\xi$ described above.
+:::
+
+# Exercises
+
+:::{.myexercise data-latex="[Wasserman 8.1]"}
+
+Consider the following dataset:
+
+```{r}
+# Create a data frame
+df <- data.frame(
+  LSAT = c(576, 635, 558, 578, 666, 580, 555, 661, 651, 605, 653, 575, 545,
+           572, 594),
+  GPA = c(3.39, 3.30, 2.81, 3.03, 3.44, 3.07, 3.00, 3.43, 3.36, 3.13, 3.12,
+          2.74, 2.76, 2.88, 3.96)
+)
+
+# Print the data frame
+print(df)
+```
+
+which are LSAT scores (for entrance to law school) and GPA. Estimate the
+standard error of the correlation coefficient $\rho$ using the bootstrap. Find a
+95 percent confidence interval using the normal, pivotal, and percentile
+methods.
+
+:::
+
+:::{.myexercise data-latex="[Wasserman  8.2]"}
+
+Conduct a simulation to compare the various bootstrap confidence interval
+methods. Let $N = 50$ and let $\psi = \frac{1}{\sigma^3}\int(x - \mu)^3 F(dx)$
+be the skewness. Draw $Y_1, \ldots, Y_N \sim \Normal(0, 1)$ and set $X_i =
+e^{Y_i}$, $i = 1, \ldots, N$. Construct the three types of bootstrap 95 percent
+intervals for $\psi$ from the data $X_1, \ldots, X_N$. Repeat this whole thing
+many times and estimate the true coverage of the three intervals.
+
+:::
