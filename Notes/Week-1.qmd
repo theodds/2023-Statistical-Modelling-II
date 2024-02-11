@@ -6,6 +6,7 @@ format:
       - file: macros.tex
 number-depth: 1
 number-sections: true
+pdf-engine: pdflatex
 ---
 
 In this collection of notes, we briefly outline the main thrust of this course

@@ -7,6 +7,7 @@ format:
     keep-tex: true
 number-depth: 1
 number-sections: true
+pdf-engine: pdflatex
 ---
 
 This week, we will learn about some of the basic theory underlying GLMs, as well

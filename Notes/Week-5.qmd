@@ -4,7 +4,7 @@ format:
   pdf:
     include-in-header:
       - file: macros.tex
-    keep-tex: true
+pdf-engine: pdflatex
 number-depth: 1
 number-sections: true
 ---
