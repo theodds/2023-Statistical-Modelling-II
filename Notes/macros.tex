@@ -18,6 +18,19 @@
   enhanced jigsaw
 }
 
+\newtcolorbox{warning}[1][]{
+  breakable,
+  title=Warning!,
+  sharp corners,
+  colback=red!5!white, % Background color
+  colframe=red!75!black, % Frame color
+  colbacktitle=red!85!black, % Background color for the title
+  coltitle=white, % Text color for the title
+  fonttitle=\bfseries, % Bold title text
+  #1 % For specifying additional options on the fly
+}
+
+
 \newtcolorbox[auto counter]{mytheorem}[1][]{
   breakable,
   title=Theorem~\thetcbcounter: #1,
