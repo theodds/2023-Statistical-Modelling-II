@@ -306,16 +306,16 @@ competing method for handling overdispersion (quasi-Poisson regression) is.
 
 ### Other Generative Models: Binomial Data
 
-We call binomial-type data $Z$ overdispersed if the variance is larger than
-would be suggested by the binomial sampling model, i.e., $\Var(Z) > n \E(Z) \{1
-- \E(Z)\}$. There is a model analogous to the negative binomial response model
-for binomial data. Binomial regression is based on the modeling assumption $Z_i
-\sim \Binomial(n_i, p_i)$, which models an experiment which is _independently_
-replicated $n_i$ times with success probability $p_i$. In many cases where
-binomial-type data occurs, we won't have strong evidence for the _independence_
-assumption underlying the binomial distribution. In addition to introducing the
-beta-binomial model, the following exercise illustrates that overdispersion
-relative to the binomial model holds very generally.
+We call binomial-type data $Z$ with mean $n p$ is overdispersed if the variance
+is larger than would be suggested by the binomial sampling model, i.e., 
+$\Var(Z) > n p(1-p)$. There is a model analogous to the negative binomial
+response model for binomial data. Binomial regression is based on the modeling
+assumption $Z_i \sim \Binomial(n_i, p_i)$, which models an experiment which is
+_independently_ replicated $n_i$ times with success probability $p_i$. In many
+cases where binomial-type data occurs, we won't have strong evidence for the
+_independence_ assumption underlying the binomial distribution. In addition to
+introducing the beta-binomial model, the following exercise illustrates that
+overdispersion relative to the binomial model holds very generally.
 
 
 :::{.myexercise data-latex="[Beta-Binomial]"}
