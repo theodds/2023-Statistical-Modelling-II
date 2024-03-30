@@ -771,11 +771,13 @@ b. Argue that the marginal likelihood of $\bY$ (i.e., with the random function
 :::{.myexercise data-latex="[Squared Exponential Kernel]"}
 
 Let the _squared exponential_ covariance function be given by
+
 $$
   K(x, x') = \sigma_\mu^2
   \exp \left\{ -\frac{1}{2} \sum_{j=1}^P \left(\frac{x_j - x'_j}{h}\right)^2
     \right\} + \sigma_\delta^2 \,  \delta(x, x') \, .
 $$
+
 The constants $(\sigma^2_\mu, \sigma^2_\delta, h)$ are often called
 _hyperparameters_ and $\delta(x,x')$ is the Kronecker delta function that takes
 the value 1 if $x = x'$ and $0$ otherwise.
@@ -958,9 +960,11 @@ example:
 Basis function expansions are a popular alternative approach to estimating
 functions from data. The main idea is to approximate the a function as a linear
 combination of a set of basis functions:
+
 $$
   \mu(x) = \beta_0 + \sum_{j = 1}^B \beta_j \, \psi_j(x)
 $$
+
 where the coefficients are estimated from data. For example, we might use the
 _polynomial basis_
 $$
@@ -970,6 +974,7 @@ which, by the [Weierstrass approximation
 theorem](https://en.wikipedia.org/wiki/Stone%E2%80%93Weierstrass_theorem), is
 capable of approximating _any_ continuous $\mu(x)$ on a closed interval. Or, for
 data with strong _seasonal_ effects, we might instead use a trigonometric basis
+
 $$
   \mu(x) 
   = \beta_0 
@@ -1107,6 +1112,7 @@ knitr::include_graphics("Figures/treefig.png")
 
 Decision trees can be used on their own, as in Figure \@ref(fig:baseball-tree),
 but are more powerful when used as basis functions. That is, we can take
+
 $$
   \mu(x) 
   = \sum_{t = 1}^T g(x; \mathcal T_t, \mathcal M_t)
