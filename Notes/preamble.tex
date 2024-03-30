@@ -1,0 +1,183 @@
+\usepackage{amsthm, amsmath, amssymb}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{mathrsfs}
+
+\newcommand{\asim}{\stackrel{{}_{\bullet}}{\sim}}
+\newcommand{\bA}{\bm A}
+\newcommand{\bX}{\bm X}
+\newcommand{\bY}{\bm Y}
+\newcommand{\bmu}{\boldsymbol{\mu}}
+\newcommand{\Bernoulli}{\operatorname{Bernoulli}}
+\newcommand{\Beta}{\operatorname{Beta}}
+\newcommand{\betat}{\widetilde\beta}
+\newcommand{\Binomial}{\operatorname{Binomial}}
+\newcommand{\Cov}{\operatorname{Cov}}
+\newcommand{\Data}{\mathcal D}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Fisher}{\mathcal I}
+\newcommand{\Gam}{\operatorname{Gam}}
+\newcommand{\gammat}{\widetilde\gamma}
+\newcommand{\GP}{\operatorname{GP}}
+\newcommand{\Identity}{\textrm{I}}
+\newcommand{\iid}{\stackrel{\text{iid}}{\sim}}
+\newcommand{\indep}{\stackrel{\text{ind}}{\sim}}
+\newcommand{\logit}{\operatorname{logit}}
+\newcommand{\MSE}{\operatorname{MSE}}
+\newcommand{\Normal}{\operatorname{Normal}}
+\newcommand{\Odds}{\operatorname{Odds}}
+\newcommand{\OFisher}{\mathcal J}
+\newcommand{\phit}{\widetilde \phi}
+\newcommand{\Poisson}{\text{Poisson}}
+\newcommand{\Reals}{\mathbb R}
+\newcommand{\sH}{\mathcal H}
+\newcommand{\sM}{\mathcal M}
+\newcommand{\trace}{\operatorname{trace}}
+\newcommand{\Tree}{\mathcal T}
+\newcommand{\Uniform}{\operatorname{Uniform}}
+\newcommand{\Var}{\operatorname{Var}}
+\newcommand{\zeros}{\boldsymbol{0}}
+
+% \newtheorem{examplefirst}{Example}
+% \newtheorem{examplesecond}{Example}
+% \newenvironment<>{examplefirst}[1][]{%
+%   \setbeamercolor{block title example}{fg=white,bg=red!75!black}%
+%   \begin{example}#2[#1]}{\end{example}}
+% \newenvironment<>{examplesecond}[1][]{%
+%   \setbeamercolor{block title example}{fg=white,bg=blue!75!black}%
+%   \begin{example}#2[#1]}{\end{example}}
+  
+% \setbeamercolor{background canvas}{bg=white}
+% \metroset{block=fill}
+
+\usefonttheme{serif}
+% \usetheme{Boadilla}
+%gets rid of bottom navigation bars
+\setbeamertemplate{footline}[frame number]{}
+
+%gets rid of bottom navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+%gets rid of footer
+%will override 'frame number' instruction above
+%comment out to revert to previous/default definitions
+% \setbeamertemplate{footline}{}
+\usecolortheme{lily}
+\setbeamercolor{block title}{bg=blue!20,fg=black}
+\setbeamercolor{block body}{bg = blue!10, fg = black}
+\setbeamertemplate{itemize item}[square]
+\setbeamercolor{itemize item}{fg = cyan}
+\setbeamercolor{itemize subitem}{fg = cyan}
+\setbeamercolor{enumerate item}{fg = cyan}
+
+\setbeamercolor{block title alerted}{fg=white, bg=orange}
+% 2- Block body (background)
+\setbeamercolor{block body alerted}{bg=orange!25}
+
+\usetheme{default}
+% \beamertemplatenavigationsymbolsempty
+
+% \definecolor{fore}{RGB}{249,242,215}
+% \definecolor{back}{RGB}{51,51,51}
+% \definecolor{title}{RGB}{255,0,90}
+% \definecolor{foo}{HTML}{E19898}
+
+
+\setbeamercolor{titlelike}{fg=cyan}
+% \setbeamercolor{normal text}{fg=fore,bg=back}
+
+\definecolor{alertblue}{HTML}{00BDEC}
+\newcommand{\alertb}[1]{{\color{alertblue}#1}}
+\setbeamercolor{alerted text}{fg=orange}
+
+\usepackage[most]{tcolorbox}
+\usepackage{bm}
+
+\definecolor{mygray}{gray}{0.9}
+
+\newtcolorbox[auto counter]{myexample}[1][]{
+  breakable,
+  title=Example: #1,
+  sharp corners,
+  before upper=\setlength{\parskip}{5pt},
+  borderline west={2pt}{0pt}{olive}, % straight vertical line at the left edge
+  colback=white,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
+  colbacktitle=lightgray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced jigsaw
+}
+
+\newtcolorbox[auto counter]{mytheorem}[1][]{
+  breakable,
+  title=Theorem: #1,
+  sharp corners,
+  before upper=\setlength{\parskip}{5pt},
+  % borderline west={2pt}{0pt}{olive}, % straight vertical line at the left edge
+  colback=mygray,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
+  colbacktitle=mygray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced jigsaw
+}
+
+% \newtcolorbox[auto counter]{exercise}[1][]{%
+%   breakable,
+%   enhanced jigsaw, % better frame drawing
+%   borderline west={2pt}{0pt}{red}, % straight vertical line at the left edge
+%   sharp corners, % No rounded corners
+%   boxrule=0pt, % no real frame,
+%   fonttitle={\large\bfseries},
+%   coltitle={black},  % Black colour for title
+%   title={Exercise:\ },  % Fixed title
+%   attach title to upper, % Move the title into the box
+%   #1
+% }
+
+\newtcolorbox[auto counter]{myexercise}[1][]{
+  breakable,
+  title=Exercise: #1,
+  sharp corners,
+  before upper=\setlength{\parskip}{5pt},
+  borderline west={2pt}{0pt}{cyan}, % straight vertical line at the left edge
+  colback=white,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
+  colbacktitle=lightgray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced jigsaw
+  % frame hidden
+}
+
+\newtcolorbox[auto counter]{mydefinition}[1][]{
+  breakable,
+  title=Definition: #1,
+  sharp corners,
+  before upper=\setlength{\parskip}{5pt},
+  borderline west={2pt}{0pt}{violet}, % straight vertical line at the left edge
+  colback=white,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
+  colbacktitle=lightgray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced jigsaw
+}
+
+\newtcolorbox{warning}[1][]{
+  breakable,
+  title=Warning!,
+  sharp corners,
+  colback=red!5!white, % Background color
+  colframe=red!75!black, % Frame color
+  colbacktitle=red!85!black, % Background color for the title
+  coltitle=white, % Text color for the title
+  fonttitle=\bfseries, % Bold title text
+  #1 % For specifying additional options on the fly
+}
