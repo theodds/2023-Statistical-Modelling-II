@@ -28,3 +28,7 @@ Notes/Week-5.tex
 .Rhistory
 Notes/Week-4-Sol.pdf
 Notes/Week-4-Sol.qmd
+*.nav
+*.snm
+*.toc
+*.vrb

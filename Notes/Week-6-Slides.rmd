@@ -1,0 +1,730 @@
+---
+title: "Week 6 Notes: Robust Regression"
+author: | 
+  | Antonio R. Linero
+  | University of Texas at Austin
+output:
+  beamer_presentation:
+    includes:
+      in_header: "preamble.tex"
+classoption:
+  - "xcolor=svgnames,dvipsnames,html"      
+keep_tex: yes
+urlcolor: blue
+---
+
+# Goals
+
+- Learn how to perform *robust* inference within the GLM framework.
+
+  - Quasi-likelihood methods
+  - Overdispersed generative models
+  - Method of moments
+  - Nonparametric bootstraps
+
+# Motivation
+
+\footnotesize
+
+__Box:__
+
+> ... all models are approximations. Essentially, all models are wrong, but some
+> are useful. However, the approximate nature of the model must always be borne
+> in mind...
+
+\alert{Goal: Understand under what situations our inferences break down and how
+to fix them.}
+
+# Common Pattern
+
+\footnotesize
+
+i. The point estimates obtained via MLE correspond to something of reasonable
+   scientific interest; but
+
+ii. The posterior/likelihood/whatever we use to quantify uncertainty __does
+    not__ correspond to something reasonable.
+
+Overdispersion in GLMs is one example (among many) of this phenomenon that we
+are already familiar with.
+
+# Questions
+
+1. How does inference based on the likelihood (including Bayesian inference)
+   behave when the model is misspecified?
+
+2. Are there broader models that we might consider that we can (and, perhaps,
+   should) use instead?
+
+# Overdispersion
+
+\alert{Recall:} Poisson and binomial GLMs necessarily have
+
+$$
+  \phi = 1
+$$
+
+We say that our count (binomial) data is _overdispersed_ relative to the Poisson
+(binomial) distribution if
+
+$$
+  \Var(Y_i \mid \mu_i) > \frac{V(\mu_i)}{\omega_i}
+$$
+
+where $V(\mu_i) = \mu_i$ for Poisson data and $V(\mu_i) = \mu_i (1 - \mu_i)$ for
+count data.
+
+# Why Overdispersion Matters
+
+\alert{Asymptotic variance:}
+
+$$
+  \Var(\widehat\beta) \approx \phi (X^\top W X)^{-1}.
+$$
+
+$\phi = 1$ too small $\leadsto$ poor coverage/hypothesis testing.
+
+# Exercise
+
+\tiny
+
+:::{.myexercise data-latex="[Ticks]"}
+
+We examine a dataset described by Elston et al. (2001, _Parisitology_) which
+contains measures of the number of ticks on Red grouse chicks (a ground-nesting
+species of birds). Chicks were captured, the number of ticks were counted, and
+then the chicks were released. Interest lies in the relationship between
+`HEIGHT` - the height above sea level at which the chick was caught - and the
+number of ticks the chicks had, as well as whether this relationship varies by
+year. This dataset can be loaded in `R` by running the code
+```{r tickinit, eval = FALSE}
+ticks <- lme4::grouseticks
+```
+
+_Note:_ for the sake of simplicity, we will ignore the variable `BROOD`, which
+indexes the brood that the chick belongs to (chicks in the same brood come from
+the same family). A serious analysis of this dataset would control for this,
+since chicks in the same brood are likely to have similar exposures to ticks.
+
+a. Fit a Poisson loglinear model of the form
+$$
+  Y_{ij} \sim \Poisson(\mu_{ij}), \qquad 
+  \log(\mu_{ij}) = 
+  \alpha_j + \beta_j \times \texttt{HEIGHT}_i
+$$
+where $Y_{ij}$ denotes the $i^{\text{th}}$ chick observed in year $j$.
+
+b. One way to check whether overdispersion is an issue is to look at the
+statistic $\widehat \phi = \frac{1}{N-P} \sum_i (Y_i - \widehat \mu_i)^2 /
+\widehat \mu_i$. Since this is an estimate of $\phi = 1$ for the Poisson
+loglinear model, we should be concerned if this quantity is large.
+
+    Compute $\widehat\phi$; does this seem large enough to cause concern?
+
+c. We can formally test the hypothesis $\widehat \phi = 1$ by comparing to its
+sampling distribution. Use the __parametric__ bootstrap (keeping `YEAR` and
+`HEIGHT` fixed but resampling $Y_i$ for each $i$) to sample many realizations of
+$\widehat \phi$ from the fitted model. Use this to approximate a $p$-value which
+gives the (approximate) probability of observing a value at least as large as
+the realized value of $\widehat \phi$ on a replicated dataset.
+
+d. Do a __nonparametric bootstrap__ to approximate the standard error of the
+regression coefficients (i.e., sample the rows of the `data.frame` with
+replacement and compute the MLE of the $\beta$'s for each resample). How do
+these compare with the variance estimates produced by the Poisson loglinear
+model?
+
+e. The test above is predicated on the assumption that the structure of the mean
+model is correctly specified; if the structure of $\log(\mu_{ij})$ is incorrect,
+this can manifest in large values of $\widehat \phi$, even if there is no
+overdispersion. To assess this, fit the model
+$$
+  \log(\mu_{ij}) = \alpha_j + 
+  \beta_{1j} \times \texttt{HEIGHT}_i + 
+  \beta_{2j} \times \texttt{HEIGHT}_i^2 + 
+  \beta_{3j} \times \texttt{HEIGHT}_i^3.
+$$
+Does $\widehat \phi$ still seem to be too large for this bigger model?
+
+:::
+
+# Generative Models: Negative Binomial Regression
+
+\alert{Overdispersed count model data:}
+
+$$
+  f(y \mid \mu, k)
+  =
+  \frac{\Gamma(y + k)}{y! \Gamma(k)} \left(\frac{\mu}{\mu+k}\right)^y \left(1 - \frac{\mu}{\mu+k}\right)^k.
+$$
+
+Then, usually set $\log \mu_i = X_i^\top\beta$.
+
+# Exercise
+
+:::{.myexercise data-latex="[Negative Binomial]"}
+
+Show that the negative binomial model (with $k$ fixed) is an exponential
+dispersion family with $\phi = 1$. Argue also that, while $k$ controls the
+amount of overdispersion in the model, it is not quite the same as a dispersion
+parameter $\phi$.
+
+:::
+
+# Negative Binomial in STAN
+
+\tiny
+
+```{r notes-4-ships-nb, results='hide', message=FALSE, cache = TRUE}
+library(rstan)
+library(rstanarm)
+
+ships <- MASS::ships
+
+## Fit the negative binomial model
+
+## Using the MASS package
+## OPTIONAL HOMEWORK: Why does MASS vomit when it runs this?
+# ships_nb <- MASS::glm.nb(
+#    incidents ~ type + factor(year) + factor(period) + 
+#                  offset(log(service)), 
+#    data = dplyr::filter(ships, service > 0))
+
+## Equivalent code in STAN
+ships_nb_stan <-
+  rstanarm::stan_glm.nb(incidents ~ type + factor(year) + factor(period),
+                        offset = log(service),
+                        data = dplyr::filter(ships, service > 0))
+```
+
+# Ships
+
+\tiny
+
+```{r nb-summary, cache = TRUE}
+summary(ships_nb_stan)
+```
+
+# Comparison of Standard Errors
+
+\tiny
+
+```{r shipsse, cache = TRUE}
+ships_nb_stan$ses / 
+  sqrt(diag(vcov(glm(
+    incidents ~ type + factor(year) + factor(period), family = poisson,
+    offset = log(service), data = ships,
+    subset = service > 0
+  ))))
+```
+
+# Exercise
+
+:::{.myexercise data-latex="[More Negative Binomial]"}
+
+Repeat Exercise 1 (all parts) with the negative binomial model, but use
+$$
+  \widehat \phi = \frac{1}{N-P} \sum_i \frac{(Y_i - \widehat \mu_i)^2}
+                          {\widehat \mu_i + \widehat \mu_i^2 / \widehat k}.
+$$
+If the negative binomial model is correct, we should have $\widehat \phi \approx
+1$. Does this model seem to do better than the Poisson?
+
+```{r notes-04-negbin, eval = FALSE, echo = FALSE}
+## My solution
+
+## (a) ----
+
+ticks_negbin <- MASS::glm.nb(TICKS ~ YEAR * HEIGHT, 
+                             data = ticks)
+
+## (b) ----
+
+mu_hat_ticks_nb <- predict(ticks_negbin, type = 'response')
+k_hat <- ticks_negbin$theta
+phi_hat_nb <- sum((ticks$TICKS - mu_hat_ticks_nb)^2 / (mu_hat_ticks_nb + mu_hat_ticks_nb^2 / k_hat)) / ticks_negbin$df.residual
+
+## (c) ----
+
+boot_phi_nb <- function(mu_hat, k_hat, my_df) {
+  rlam <- rgamma(length(mu_hat), shape = k_hat, rate = k_hat / mu_hat)
+  boot_y <- rpois(length(mu_hat), rlam)
+  my_df$TICKS <- boot_y
+  boot_nb <- MASS::glm.nb(TICKS ~ YEAR * HEIGHT, data = my_df)
+  mu_hat_boot <- predict(boot_nb, type = 'response')
+  k_hat_boot <- boot_nb$theta
+  boot_phi <- sum((boot_y - mu_hat_boot)^2 / (mu_hat_boot + mu_hat_boot^2 / k_hat_boot)) / boot_nb$df.residual
+  return(boot_phi)
+}
+ 
+phi_hat_boot_nb <- replicate(1000, boot_phi_nb(mu_hat_ticks_nb, k_hat, ticks))
+mean(phi_hat_boot_nb > phi_hat_nb)
+hist(phi_hat_boot_nb, col = 'gray')
+abline(v = phi_hat_nb)
+
+## (d) ----
+
+model_se_nb <- sqrt(diag(vcov(ticks_negbin)))
+
+boot_betas_nb <- function(my_df) {
+  idx <- sample(1:nrow(my_df), replace = TRUE)
+  new_df <- my_df[idx,]
+  boot_nb <- MASS::glm.nb(TICKS ~ YEAR * HEIGHT, data = new_df)
+  return(coef(boot_nb))
+}
+
+beta_boot_nb <- replicate(1000, boot_betas_nb(ticks))
+boot_se_nb <- apply(beta_boot_nb, 1, sd)
+
+rbind(boot_se_nb, model_se_nb)
+
+## (e) ----
+
+ticks_cubic_nb <- MASS::glm.nb(TICKS ~ YEAR * poly(HEIGHT, 3),
+                   data = ticks)
+
+calc_phi_hat_nb <- function(fit) {
+  y <- fit$y
+  mu <- predict(fit, type = 'response')
+  k <- fit$theta
+  V <- mu + mu^2 / k
+  df <- fit$df.residual
+  phi_hat <- sum((y - mu)^2 / V) / df
+  return(phi_hat)
+}
+
+calc_phi_hat_nb(ticks_cubic_nb)
+
+```
+
+:::
+
+# Warning
+
+:::{.warning data-latex="[]"}
+
+One issue with the negative binomial model is that the variance grows quite
+quickly in $\mu$ --- specifically, we get overdispersion by jumping from a
+linear relationship between the mean and variance to a quadratic relationship.
+Some would argue that this is overkill, and that (for large $\mu$) we may start
+overshooting the variance.
+
+:::
+
+# Other Generative Models: Binomial Data
+
+Binomial-type data $Z_i$ is overdispersed relative to the 
+$\Binomial(n_i,\mu_i)$ distribution if
+
+$$
+  \Var(Z_i) > n_i \, \mu_i (1 - \mu_i).
+$$
+
+Occurs when we have binomial-type experiments where \alert{trials are not
+independent!}
+
+# Exercise
+
+\tiny
+
+:::{.myexercise data-latex="[Beta-Binomial]"}
+
+Suppose that $Z_i \sim \Binomial(n_i, p_i)$ with 
+$p_i \sim \Beta\{\rho \mu_i, \rho (1 - \mu_i)\}$.
+
+(a) Show that, marginally, $Z_i$ has mass function
+$$
+  f(z; \mu_i, \rho)
+  =
+  \binom{n_i}{z}
+  \cdot
+  \frac{\Gamma(\rho)}{\Gamma(\rho \mu_i) \Gamma(\rho [1 - \mu_i])}
+  \cdot
+  \frac{\Gamma(\rho \mu + z) \Gamma(\rho[1 -\mu] + n_i - z)}
+       {\Gamma(\rho + n_i)}.
+$$
+This distribution is known as a _beta-binomial distribution_.
+
+(a) Show that $\E(Z_i) = n_i \mu_i$.
+
+(a) Show that, for $n_i > 1$, $\Var(Z_i) > n_i \mu_i (1 - \mu_i)$ so that $Z_i$ is
+    overdispersed. _Hint_: like the Poisson setting, you can show that this 
+    holds without making use of the fact that $p_i$ has a beta distribution.
+    This will save you from having to compute moments of the beta distribution
+    unnecessarily.
+
+:::
+
+# Exercise
+
+\tiny
+
+:::{.myexercise data-latex="[Rats]"}
+
+Quoting Alan Agresti (Categorical Data Analysis, 3rd Edition, Section 4.7.4):
+
+> Teratology is the study of abnormalities of physiological development. Some
+> teratology experiments investigate effects of dietary regimens or chemical
+> agents on the fetal development of rats in a laboratory setting. Table 4.7
+> shows results from one such study (Moore and Tsiatis 1991). Female rats on
+> iron-deficient diets were assigned to four groups. Rats in group 1 were given
+> placebo injections, and rats in other groups were given injections of an iron
+> supplement; this was done weekly in group 4, only on days 7 and 10 in group 2,
+> and only on days 0 and 7 in group 3. The 58 rats were made pregnant,
+> sacrificed after three weeks, and then the total number of dead fetuses was
+> counted in each litter. Due to unmeasured covariates and genetic variability
+> the probability of death may vary from litter to litter within a particular
+> treatment group.
+
+The data can be obtained by running the following commands.
+```{r ratload, cache = TRUE}
+rats_path <- paste0("https://raw.githubusercontent.com/theodds/", 
+                    "SDS-383D/main/rats.csv")
+rats <- read.table(rats_path, sep = "\t", header = TRUE)
+head(rats)
+```
+
+Our interest is in the relationship between the treatment `group` and the number
+of dead fetuses. As this is our first treatment of _binomial_ (as opposed to
+_Bernoulli_) data, I will show how to fit the a binomial glm:
+```{r ratbinom}
+rats_binomial <- glm(cbind(y, n - y) ~ factor(group), 
+                     family = binomial, 
+                     data = rats)
+```
+The response is given in two columns: the number of successes and number of
+failures for each observation (we did not need to do this with Bernoulli data
+since the number of trials is always 1).
+
+(a) Based on the fit of the binomial model, do rats in the placebo group appear
+    to have a fewer proportion of dead fetuses? Justify your conclusions by
+    appropriately accounting for uncertainty.
+
+(a) Using the same strategies you used for the Poisson, assess whether this data
+    is overdispersed relative to the binomial distribution (make the necessary
+    modifications to $\widehat \phi$).
+    
+(a) Use the `aod` package to fit a beta-binomial model to the data. Do your
+    qualitative conclusions change? How does this choice affect the standard
+    errors of the effects of interest?
+
+:::
+
+# Quasi Likelihood
+
+Quasi-likelihood models replace the likelihood with the *quasi-likelihood*
+
+$$
+  q(y \mid \mu, \phi) 
+  = \exp\left\{\int_{y}^\mu \frac{y - t}{\phi V(t)} \ dt\right\}
+$$
+
+which encodes the moment conditions
+
+$$
+  \E(Y_i \mid \mu_i) = \mu_i \qquad \text{and} \qquad
+  \Var(Y_i \mid \mu_i) = \phi \, V(\mu_i).
+$$
+
+\alert{We don't specify an exponential dispersion family, just a link function
+$g(\cdot)$ and variance function $V(\cdot)$.}
+
+# The Quasi Score and Quasi Fisher Information
+
+Score function is
+
+$$
+  s(\beta) 
+  = \sum_i \frac{\omega_i (Y_i - \mu_i) \, X_i}{\phi \, V(\mu_i) g'(\mu_i)}.
+$$
+
+\alert{Should look familiar!} Similarly, Fisher information is 
+$\frac{X^\top W X}{\phi}$.
+
+# Examples of Quasi-Likelihood Methods
+
+- \alertb{Quasi-Poisson:}
+
+    $$
+      V(\mu) = \mu.
+    $$
+    
+    Allows us to use a Poisson-like model without assuming $\phi \equiv 1$.
+    
+- \alertb{Quasi-Binomial:}
+
+    $$
+      V(\mu) = \mu (1 - \mu).
+    $$
+    
+    Allows us to use a binomial-like model without assuming $\phi \equiv 1$.
+
+# Ships Again
+
+\tiny
+
+We can fit the quasi-Poisson model to the `ships` dataset with the following
+commands.
+
+```{r ships-quasi}
+ships <- MASS::ships
+quasi_ships <- glm(incidents ~ type + factor(year) + factor(period),
+                   family = quasipoisson,
+                   data = ships,
+                   offset = log(service),
+                   subset = (service != 0))
+summary(quasi_ships)
+```
+
+# Ships Again
+
+\tiny
+
+```{r ships-aod}
+anova(quasi_ships, test = "F")
+```
+
+# Ticks Again
+
+\tiny
+
+:::{.myexercise data-latex="[Ticks Revisited]"}
+
+Apply the quasi-Poisson model to the `ticks` dataset. 
+
+(a) How do the standard errors from the quasi-Poisson model compare to the
+    standard errors you get from (i) Poisson log-linear model, (ii) the negative
+    binomial model, and (iii) the nonparametric bootstrap?
+
+(a) How do the regression coefficient estimates from the quasi-Poisson model 
+    compare to the estimates from the Poisson log-linear model. Can you explain
+    the relationship you see?
+    
+(a) The `robust` function in the `sjstats` package computes _robust_ standard
+    errors for a variety of models in `R` based on the sandwich matrix
+    construction of the variance of the $M$-estimators; this has the advantage
+    of being generally correct, without even requiring the variance assumption
+    to be correct (but does not allow for an extension of analysis of deviance).
+    How do these standard errors compare to the quasi-likelihood standard
+    errors? What about to the nonparametric bootstrap?
+
+:::
+
+# The Quasi-Binomial Model
+
+\tiny
+
+The quasi-Binomial model makes use the assumptions
+$$
+  g(\mu_i) = x_i^\top \beta \qquad \text{and} \qquad
+  \Var(Y_i \mid X_i) = \phi \, \mu_i (1 - \mu_i) / n_i,
+$$
+so that the same variance function $V(\mu)$ as the binomial model is used. The
+quasi-binomial model can be fit in the same as the quasi-Poisson (just change
+the family `quasipoisson` to `quasibinomial`).
+
+:::{.myexercise data-latex="[Rats Revisited]"}
+
+Apply the quasi-binomial model to the `rats` dataset. Are the results consistent
+with the results you got from the binomial and beta-binomial models? What about if
+you use `robust` standard errors instead?
+
+:::
+
+# Why Quasi-Likelihood Works
+
+Suppose $Z_1, \ldots, Z_N \iid F_0$ for some $F_0$ and we want to estimate
+$\beta_0 = \beta(F_0)$. An *estimating equation* for estimating $\beta_0$
+is given by the $\widehat \beta$ that solves
+
+$$
+  \frac{1}{N }\sum_i m(Z_i; \beta) = 0
+$$
+
+where $m(z; \beta)$ is such that 
+$$\E_{F_0}\{m(Z_i; \beta)\} = 0 \iff \beta = \beta_0.$$
+
+\alert{$\widehat\beta$ is referred to as an $M$-estimator.}
+
+# $M$-Estimators
+
+\tiny
+
+:::{.myexercise data-latex="[M Estimators]"}
+
+Let $\beta = \beta(F)$ be a parameter of interest and let $\beta_0 = \beta(F_0)$
+denote its true value. Let $m(z; \beta)$ be a function taking values in $\mathbb
+R^{P}$ where $P = \dim(\beta)$ such that $\E\{m(Z; \beta)\} = 0$ only when $\beta =
+\beta_0$. We define the _$M$-estimator_ of $\beta_0$ via the _estimating equation_
+$$
+  \frac{1}{N} \sum_{i=1}^N m(Z_i; \widehat \beta) = 0,
+$$
+solving the "finite-sample" version of the population equation $\E\{m(Z_i ;
+\beta_0)\} = 0$.
+
+Informally, argue that the asymptotic distribution of $\widehat \beta$ is 
+$$
+  \widehat \beta \asim \Normal(\beta_0, V_N),
+$$
+where the covariance matrix $V_N$ is given by the _sandwich matrix_ $B_N^{-1} C_N
+B_N^{-\top} / N$ with
+$$
+  B_N = -\E\{m'(Z_1 ; \beta_0)\}
+  \quad \text{and} \quad
+  C_N = \E\{m(Z_i;\beta_0) \, m(Z_i ; \beta_0)^\top\},
+$$
+and where $m'(z; \beta) = \frac{\partial}{\partial \beta} m(z; \beta)$ is the
+Jacobian matrix of $m(z;\beta)$ with respect to $\beta$. Then, propose estimators
+for $B_N$ and $C_N$ that can be used in practice.
+
+__Hint__: Taylor expand $N^{-1} \sum_{i=1}^N m(Z_i; \beta_0)$ about $\widehat \beta$
+and ignore the remainder.
+
+:::
+
+# Exercise
+
+\tiny
+
+:::{.myexercise data-latex="[Misspecified MLE]"}
+
+Suppose that $Z_1, \ldots, Z_N \iid F_0$ and we base inference on a working
+parametric family $\{F_\theta : \theta \in \Theta\}$ which happens to be incorrect
+(i.e., $F_0 \notin \{F_\theta\}$). Using the $M$-estimation framework, show that the
+MLE of $\theta$ is (under the unstated assumptions that make $M$-estimation valid)
+still asymptotically normal, centered at the solution $\theta^\star$ of the score
+equation
+$$
+  \E\left\{s(\theta^\star; Z_1)\right\} = 0,
+$$
+and derive the form of the asymptotic covariance matrix of $\widehat \theta$. How
+does this differ from the usual asymptotic variance?
+
+__Hint:__ when the model is misspecificed, there is a simplification which 
+_does not occur_.
+
+:::
+
+# Sandwich
+
+\tiny
+
+:::{.myexercise data-latex="[Sandwich Matrix]"}
+
+Show that the components of the sandwich matrix for the quasi-likelihood model are
+given by
+$$
+  B_N = \frac 1 {\phi N} X^\top W X
+  \quad \text{and} \quad
+  C_N = \frac 1 {\phi N} X^\top W^\star X
+$$
+where
+$$
+  W = \diag\left\{
+    \frac{\omega_i}{V(\mu_i) \, g'(\mu_i)^2}
+  \right\}
+  \quad \text{and} \quad
+  W^\star = \diag \left\{
+    \frac{\Var(Y_i \mid X_i)}{[V(\mu_i) \, g'(\mu_i) / \omega_i ]^2}.
+  \right\}
+$$
+Show also that, when our assumption about the variance $\Var(Y_i \mid X_i) =
+\frac{\phi}{\omega_i} V(\mu_i)$ is correct then this simplifies to $\phi (X^\top W
+X)^{-1}$.
+
+:::
+
+# What Makes Quasi-Likelihood Special
+
+\footnotesize
+
+The $M$-estimator asymptotics above limit us mostly to Wald-based and
+score-based inference. Quasi-likelihoods \alert{also give us likelihood-based
+methods.}
+
+- quasi log-likelihood
+    $$
+        \ell(\beta) = \sum_{i=1}^N \frac{\omega_i}{\phi} 
+        \int_{Y_i}^{\mu_i} \frac{Y_i - t}{V(t)} \, dt,
+    $$
+
+- quasi-deviance
+
+    $$
+      D = -2\phi \ell(\widehat \beta).
+    $$
+    
+- Can test nested models using an $F$-statistic:
+
+    $$
+      F = \frac{(D_0^\star - D_1^\star) / (p - q)}{\widehat \phi / \phi}
+        = \frac{D_0 - D_1}{(P - R) \widehat \phi}
+        \approx F_{D, N - P}
+    $$
+    
+    where $D$ is difference in model dimensions of nested models $\mathcal M_0
+    \subseteq \mathcal M_1$.
+
+# Exercise
+
+:::{.myexercise data-latex="[Quasi-Poisson]"}
+Show for the Poisson loglinear model that this does indeed recover the correct
+likelihood, up-to a normalizing constant.
+:::
+
+# Other Approaches
+
+\alert{Possibilities:}
+
+1. Drop the variance assumption $\Var(Y_i \mid X_i) = \phi \, V(\mu_i)$
+   for some known function $V(\cdot)$.
+
+1. Drop the assumption that $g(\mu_i) = X_i^\top\beta$ for some
+   parameter vector $\beta$.
+
+\alertb{First setting:} estimator of $\beta$ will still be consistent, but
+might not be _efficient_. Can still use sandwich matrix for the variance, or
+perform score-like inference, but no immediate likelihood equivalent...
+
+# Empirical Likelihood
+
+\footnotesize
+
+:::{.definition data-latex="[Empirical Likelihood]"}
+
+The _profile empirical likelihood_ of $\beta$ is given by
+$$
+  \ell_{\text{EL}}(\beta)
+  =
+  \max\left\{\prod_{i=1}^N p_i : \sum_i p_i \frac{\omega_i (Y_i - \mu_i) \, X_i}{\phi \, V(\mu_i) \, g'(\mu_i)} = 0, p_i \ge 0, \sum_i p_i = 1\right\}.
+$$
+
+:::
+
+From here it is possible to prove a version of Wilk's theorem that allows us to
+build likelihood-based intervals, perform hypothesis tests, and so forth, while
+invoking minimal assumptions.
+
+# Assumption Free Methods?
+
+\tiny
+
+:::{.myexercise data-latex="[Asymptotic Distribution of the MLE Under Total Misspecificaiton]"}
+
+Argue that, when a GLM (with known $\phi$) is misspecified, the parameter $\beta$ we
+estimate corresponds to
+$$
+  \beta \equiv \arg \max_\beta \int \log f(y \mid \beta, x) \, f_0(y, x) \ dy \ dx
+$$
+where $f_0(x,y)$ is the true joint density of $(X_i, Y_i)$. This parameter
+corresponds to the so-called [Kullback-Leibler
+projection](https://en.wikipedia.org/wiki/Information_projection) of $f_0(y \mid x)$
+onto the family $\{f(y \mid x, \beta, \phi) : \beta \in \Reals\}$.
+
+Next, show that when the GLM is just a linear regression that the above $\beta$
+corresponds to $\min_\beta \E[\{r_0(X_i) - X_i^\top\beta\}^2]$ where $r_0(X_i) =
+\E(Y_i \mid X_i)$ is the true regression function; that is, $x^\top\beta$ is the
+_best linear approximation_ to $r_0(x)$ (with respect to the distribution of $X_i$).
+
+:::
+

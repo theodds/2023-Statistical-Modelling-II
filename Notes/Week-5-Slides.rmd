@@ -1,0 +1,247 @@
+---
+title: "Week 5 Notes: The Bootstrap"
+author: | 
+  | Antonio R. Linero
+  | University of Texas at Austin
+output:
+  beamer_presentation:
+    includes:
+      in_header: "preamble.tex"
+classoption:
+  - "xcolor=svgnames,dvipsnames,html"      
+keep_tex: yes
+urlcolor: blue
+---
+
+# Goals
+
+1. Learn how to use the bootstrap to estimate the sampling distribution of
+   (almost) any statistic $T = T(\Data)$.
+
+1. Learn the distinction between various types of bootstraps (nonparametric and
+   parametric bootstraps).
+
+1. Get practice implementing the bootstrap and apply it to several problems.
+
+# Motivation
+
+__Goal:__ estimate the _sampling distribution_ of a statistic
+
+$$
+  T = T(\Data)
+$$
+
+\alertb{Why?} If $T$ is a "good" estimator of a parameter $\psi$ then
+
+$$
+  T \pm z_{\alpha / 2} \times \text{std. error}(T)
+$$
+
+will be a "good" confidence interval for $\psi$. 
+
+\pause
+
+\alert{Other types of intervals are of course possible, and bootstrap can help
+with those as well.}
+
+# Motivation: Robust Standard Errors
+
+Assume we fit a GLM such that
+
+$$
+  g(\mu_i) = X_i^\top \beta
+$$
+
+*correctly describes the mean model*. \alert{How does MLE behave?}
+
+\vspace{1em}
+
+\pause
+
+1. $\sqrt N (\widehat\beta - \beta_0) \to N(0, \Sigma)$ ($\sqrt N$-consistent!)
+
+2. $\Sigma \ne$ the inverse Fisher information.
+
+# Motivation: Robust Standard Errors
+
+\alert{Problem:} given $X_1, \ldots, X_N \iid F$, what if I want a CI for 
+$$
+  m_F = \text{median}(F)?
+$$
+\alertb{Several ways to do this!} But one is to use the fact that
+$$
+  M \asim \Normal\{m_F, \sigma^2_M\}
+  \quad \text{where} \quad M = \text{median}(X_1, \ldots, X_N).
+$$
+\alertb{But hard to estimate $\sigma^2_M$!}
+
+\pause
+
+\alert{More generally:} many estimators are *asymptotically linear*, meaning
+that
+$$
+  \widehat \theta = \theta_0 + \frac{1}{N} \sum_i \phi(X_i; \theta_0) + o_P(N^{-1/2})
+$$
+for a mean-0 function $\phi(X_i; \theta_0)$ called the *influence function.* 
+\alertb{Implies a CLT, but may be difficult to estimate variance!}
+
+# The Bootstrap Principle
+
+\begin{tcolorbox}[sharp corners,
+  title=The Bootstrap Principle:,
+  before upper=\setlength{\parskip}{5pt},
+  % borderline west={2pt}{0pt}{olive}, % straight vertical line at the left edge
+  colback=mygray,
+  boxrule=0pt, % no real frame,
+  % colframe=lightgray,
+  colbacktitle=mygray,
+  coltitle=black,
+  fonttitle=\bfseries,
+  enhanced jigsaw]
+  
+  Suppose that $\Data \sim G$, $\psi = \psi(G)$ is a parameter of $G$ we are
+  interested in, and $T = T(\Data)$ is an estimator of $\psi$. Then we can
+  approximate the sampling distribution of $T(\Data)$ by
+  
+  1. estimating $G$ with some $\widehat G$; and
+  
+  2. using the sampling distribution of $T^\star = T(\Data^\star)$ to estimate
+     the sampling distribution of $T$, where $\Data^\star \sim \widehat G$.
+  
+\end{tcolorbox}
+
+# Example
+
+Suppose $X_1, \ldots, X_N \iid \Normal(\mu, \sigma^2)$.
+
+- Estimate $\mu \approx \bar X$ and 
+  $\sigma^2 \approx s^2 =  \frac{\sum_i (X_i - \bar X)^2}{N - 1}$. \pause
+- $\widehat F = \Normal(\bar X, s^2)$. \pause
+- $\Data^\star = \{X^\star_1, \ldots, X^\star_N\}$ with 
+  $X^\star_i \iid \Normal(\bar X, s^2)$. \pause
+- From properties of normal $\bar X^\star \sim \Normal(\bar X, s^2 / N)$. \pause
+- Approximate sampling variance of $\bar X$ is therefore $s^2 / N$.
+
+# Example: Nonparametric Bootstrap
+
+Suppose $X_1, \ldots, X_N \iid F$. What is the distribution of 
+$M = \text{median}(X_1, \ldots, X_N)$?
+
+- Estimate $F$ with $\widehat F = \frac{1}{N} \sum_i \delta_{X_i}$. \pause
+- Approximate sampling distribution of $M$ with 
+  $\text{median}(X^\star_1, \ldots, X_N^\star)$ where 
+  $X_i^\star \iid \widehat F$. \pause
+- Cannot do this in closed form... \pause
+- So use Monte Carlo instead! Sample many new datasets, compute the median on 
+  each, and use the resulting empirical distribution of $M$!
+
+# Bootstrap Variance Estimation
+
+The bootstrap can be used to approximate the variance (or standard deviation) of
+$T$ as follows:
+
+1. Draw $\Data^\star \sim \widehat G$ (for example, if $X_1, \ldots, X_N \iid F$
+   then we take $X_1^\star, \ldots, X_N^\star \iid \mathbb F$). 
+2. Compute $T^\star = T(\Data^\star)$.
+3. Repeat steps 1 and 2 $B$ times to get $T^\star_1, \ldots, T^\star_B$.
+4. Let $v_{\text{boot}} = \frac{1}{B} \sum_{b=1}^B \left(T^\star_b - \bar
+   T\right)^2$ where $\bar T = \frac{1}{B} \sum_b T^\star_b$.
+   
+# Pseudocode
+
+\footnotesize
+
+```{r, eval = FALSE}
+## Let X be a vector of size N, sampled from F
+T <- median(X)
+Tboot <- numeric(N)
+for(i in 1:B) {
+  ## Sample N iid draws from the empirical distribution of X
+  Xstar <- sample(x = X, size = N, replace = TRUE)
+  ## Save the result
+  Tboot[i] <- median(Xstar)
+}
+v_boot <- var(Tboot)
+se_boot <- sqrt(v_boot)
+```
+
+# The Normal Interval
+
+For asympototically linear statistics, it makes sense to use the interval
+
+$$
+  T \pm z_{\alpha / 2} \times \text{se}_{\text{boot}}
+$$
+
+\alert{Great if we are close to normality!} Can also use a $t_{\alpha/2}$
+interval if worried about Monte Carlo error...
+
+# Basic Percentile Method
+
+Mimics Bayesian reasoning:
+
+1. Sample many $T^\star$'s according to the nonparametric bootstrap.
+
+1. Use the interval $(T^\star_{\alpha / 2}, T^{\star}_{1 - \alpha / 2})$ 
+   where $T^\star_\gamma$ denotes the $100\gamma^{\text{th}}$ percentile of
+   $T^\star$.
+   
+\alert{Why does this work?}
+
+# Pivotal Intervals
+
+- Don't approximate the sampling distribution of $T$ with that of
+$T^\star$
+
+- Instead, approximate the sampling distribution of $\zeta = T - \psi$ with 
+$\zeta^\star = T^\star - T$. 
+
+- Leads to the interval
+
+$$
+  \psi \in (T - \zeta^\star_{1-\alpha/2}, T - \zeta^\star_{\alpha/2})
+  = (2T - T^\star_{1-\alpha/2}, 2T - T^\star_{\alpha / 2}).
+$$
+
+\alert{Show on board why this works.} \pause
+
+*Works best when $T - \psi$ is a  __pivotal quantity__*. Exact pivots are
+hard to get without strong assumptions, however...
+
+# Exercise
+
+\footnotesize
+
+:::{.myexercise data-latex="[Wasserman 8.1]"}
+
+Consider the following dataset:
+
+```{r}
+df <- data.frame(
+  LSAT = c(576, 635, 558, 578, 666, 580, 555, 661, 651, 
+           605, 653, 575, 545, 572, 594),
+  GPA = c(3.39, 3.30, 2.81, 3.03, 3.44, 3.07, 3.00, 3.43, 
+          3.36, 3.13, 3.12, 2.74, 2.76, 2.88, 3.96)
+)
+```
+
+which are LSAT scores (for entrance to law school) and GPA. Estimate the
+standard error of the correlation coefficient $\rho$ using the bootstrap. Find a
+95 percent confidence interval using the normal, pivotal, and percentile
+methods.
+
+:::
+
+# Exercise
+
+:::{.myexercise data-latex="[Wasserman  8.2]"}
+
+Conduct a simulation to compare the various bootstrap confidence interval
+methods. Let $N = 50$ and let $\psi = \frac{1}{\sigma^3}\int(x - \mu)^3 F(dx)$
+be the skewness. Draw $Y_1, \ldots, Y_N \sim \Normal(0, 1)$ and set $X_i =
+e^{Y_i}$, $i = 1, \ldots, N$. Construct the three types of bootstrap 95 percent
+intervals for $\psi$ from the data $X_1, \ldots, X_N$. Repeat this whole thing
+many times and estimate the true coverage of the three intervals.
+
+:::
+

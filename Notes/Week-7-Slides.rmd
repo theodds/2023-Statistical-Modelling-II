@@ -1,0 +1,777 @@
+---
+title: "Week 7 Notes: Models for Dependent Data"
+author: | 
+  | Antonio R. Linero
+  | University of Texas at Austin
+output:
+  beamer_presentation:
+    includes:
+      in_header: "preamble.tex"
+classoption:
+  - "xcolor=svgnames,dvipsnames,html"
+keep_tex: yes
+urlcolor: blue
+---
+
+# Motivation
+
+**Question:** \alert{How do we deal with dependent data?}
+
+_Examples:_
+
+1. $Y_i$'s are measurements taken over space or time.
+
+1. $Y_i$'s are _clustered_, e.g., measurements taken on the same individual
+   (repeated measures) or on different individuals in the same
+   hospital/school/family.
+
+\pause
+
+\vspace{1em}
+
+\alertb{Options:}
+
+1. Random effects models (good for _conditional inference_ or if dependence
+   structure is of interest)
+2. Estimating equations (good for _marginal inference_ or if dependence is a
+   nuisance)
+
+# Generalized Linear Mixed Effects Models
+
+A generalized linear mixed effects model (GLMM) modifies the systematic
+component of a GLM by setting
+
+$$
+  g(\mu_i) = X_i^\top \beta + Z_i^\top U
+$$
+
+where $U$ is now modeled as *random*, with density $U \sim f(u \mid \gamma)$.
+
+# Example: Random Intercepts
+
+:::{.myexercise data-latex="[Simple Example]"}
+
+Consider the hierarchical model
+$$
+  Y_{ij} = \mu + \alpha_j + X_{ij}^\top \beta + \epsilon_{ij}
+$$
+where $\alpha_j \sim \Normal(0, \sigma^2_\alpha)$. Show that this model can be 
+written in the GLMM form for some choice of $U_i$ and $Z_i$.
+
+:::
+
+# Example: Spatial Models
+
+Suppose $Y_i = Y(s_i)$ is a spatially indexed process. A common model for such
+processes sets
+
+$$
+  g\{\mu(s_i)\} = X_i^\top \beta + Z(s_i)^\top U
+$$
+
+where $Z(s_i) = (Z_1(s_i), \ldots, Z_B(s_i))^\top$ is a
+*basis function expansion* of a spatial process.  
+
+# Random Effects Distribution
+
+Usually we take
+
+$$
+  U \sim \text{Normal}(0, \Sigma_\gamma),
+$$
+
+where $\Sigma_\gamma$ usually has some known form.
+
+\alertb{Alternatively:} use NPMLE or DPs to estimate $f(u \mid \gamma)$
+nonparametrically.
+
+# Fitting GLMMs for Bayesians
+
+\footnotesize
+
+```{r, eval = FALSE}
+if(is_small(my_data)) {
+  run_mcmc(my_data, my_model)
+} else {
+  run_vb(my_data, my_model)
+}
+```
+
+Won't go into MCMC (`Stan` works well), and don't have time for a digression on
+variational Bayes (VB). VB is much faster than MCMC but can produce
+poorly-calibrated uncertainty estimates.
+
+# Fitting GLMMs for Frequentists
+
+\footnotesize
+
+\alertb{Goal:} maximize
+
+$$
+     L(\beta, \gamma)
+     =
+     \int \prod_i f(Y_i \mid \theta_i, \phi / \omega_i) \ f(u \mid \gamma) \ du .
+$$
+
+\alert{This is hard for GLMMs!} Unlike LMMs, cannot usually compute this
+analytically.
+
+# Why Integrate?
+
+\tiny
+
+:::{.myexercise data-latex="[Neyman-Scott Problem]"}
+One might wonder why we feel the need to integrate out the random effects
+instead of (say) maximizing over them. Suppose that we have paired responses
+$(Y_{i1}, Y_{i2})$ such that
+$$
+  Y_{ij} = \mu_i + \epsilon_{ij} \qquad \text{where} \qquad \epsilon_{ij} \sim
+  \Normal(0, \sigma).
+$$
+Think of $Y_{ij}$'s as representing two measurements of individuals on some
+test; our interest is in $\sigma$, which describes variation in individuals, but
+not the $\mu_i$'s (we don't care about learning about the particular individuals
+we sampled, but about the population).
+
+Suppose we use a flat prior for the random effects, $f(\mu_i) \propto 1$ (this
+is done to make the computations easier, and doesn't affect the qualitative
+conclusions).
+
+(a) Compute the MLE of $\sigma$ obtained from optimizing the joint likelihood
+$$
+      \ell(\mu_1, \ldots, \mu_N, \sigma)
+      =
+      \sum_{i=1}^N \sum_{j=1}^2 -\frac 1 2 \log(2\pi\sigma^2) - \frac{(Y_{ij} - \mu_i)}{2\sigma^2}.
+$$
+    Does this seem like a good estimate?
+
+(b) Compute the MLE of $\sigma$ obtained from optimizing the integrated
+    log-likelihood
+$$
+      \ell(\sigma)
+      =
+      \log \prod_{i = 1}^N \int \prod_{j=1}^2 \frac{1}{\sqrt{2\pi\sigma^2}}
+      \exp\left\{-\frac{(Y_{ij} - \mu_i)^2}{2\sigma^2}\right\} \ d\mu_i.
+$$
+    How does this compare to our other answer?
+:::
+
+# Strategies
+
+\footnotesize
+
+**Possibilities:**
+
+1. \alertb{Numeric integration:} use Gaussian quadrature, or similar. (`glmer`, sometimes)
+ 
+2. \alertb{Monte Carlo integration:} use expectation-maximization (EM),
+     with expectations computed using MCMC.
+
+3.  \alertb{Laplace approximation:} $\log f(y \mid u) \approx \log f(y \mid
+    \widehat u) - \frac{1}{2} (u - \widehat u)^\top \OFisher (u - \widehat u)$,
+    and now my integral is easy. (`glmer`, other times)
+    
+\pause
+
+\vspace{1em}
+
+**Problems:**
+
+1. \alert{Useless if integral is higher than one or two dimensions.}
+
+2. \alert{Just go full Bayes, you coward.}
+
+3. \alert{Only as good as the Laplace approximation.} (INLA and VB are attempts
+   at improving this.)
+
+# Conditional Versus Marginal Effects
+
+\alert{What does $\beta$ represent?}
+
+$$
+  \begin{aligned}
+  g\{\E(Y)\}
+  &=
+  g[\E\{\E(Y \mid U)\}]
+  \ne
+  \E[g\{\E(Y \mid U)\}]
+  \\&=
+  X^\top\beta + Z^\top E(U)
+  =
+  X^\top\beta.
+  \end{aligned}
+$$
+
+It represents the effect of $X$ *conditional on $U$*! \alertb{When are these
+the same?}
+
+# A Damping Effect
+
+\tiny
+
+::: {.myexercise data-latex="[Conditional vs. Marginal]"}
+
+Suppose that $Y$ is binary and let $\Phi$ be the cdf of a $\Normal(0,1)$ random
+variable. Consider the mixed effects probit model
+$$
+  \Pr(Y = 1 \mid z, x, \gamma, \beta) =
+  \Phi(x^\top\beta + z^\top\gamma)
+$$
+where $\gamma \sim \Normal(0, \Sigma)$ is a random effect.
+
+(a) Show that, in this case, the marginal model is also a probit model
+$$
+      \Pr(Y = 1 \mid z, x, \beta, \Sigma)
+      =
+      \Phi\left(
+    \frac{x^\top\beta}{\sqrt{1 + z^\top \Sigma z}}
+      \right)
+$$
+    Hence, the marginal model for the probit is also a probit model in which
+    the covariate effect $\beta$ is *dampened* in the marginal model by a factor
+    of $\sqrt{1 + z^\top \Sigma z}$. *Hint:* we can write the left hand side as
+$$
+      \int \Phi(x^\top \beta + z^\top \gamma) \, f(\gamma) \ d\gamma
+      =
+      \int \int I(\epsilon \le x^\top \beta + z^\top \gamma) \, 
+        \phi(\epsilon) \, f(\gamma) \ d\gamma \ d\epsilon
+$$
+    and the right-hand-side is the expectation of
+    $I(\epsilon - z^\top \gamma \le x^\top \beta)$ where
+    $\epsilon \sim \Normal(0,1)$ and $\gamma \sim \Normal(0, \Sigma)$; what is
+    the distribution of $\epsilon - z^\top \gamma$?
+
+(b) Consider the special case where the conditional success probability is given
+    by $\Phi(\beta_0 + \beta_1 x + \gamma)$ where $\gamma \sim \Normal(0, 4)$.
+    Let $\beta_0 = 0$ and $\beta_1 = 2$. First, plot the conditional success
+    probability as a function of $x$ for 20 randomly sampled values of $\gamma$
+    as dashed lines. Then, plot the marginal success probability as a solid
+    line. Comment on what you see.
+
+
+:::
+
+# Practice
+
+\tiny
+
+:::{.myexercise data-latex="[Polls]"}
+
+In `polls.csv` you will find the results of several political polls from the
+1988 U.S. presidential election. The outcome of interest is whether someone
+plans to vote for George Bush. There are several potentially relevant
+demographic predictors here, including the respondent's state of residence. The
+goal is to understand how these relate to the probability that someone will
+support Bush in the election. You can imagine that this information would help a
+great deal in poll re-weighting and aggregation.
+
+
+Using `STAN` (or the `stan_glmer` function in `rstanarm`), fit a hierarchical
+logit model of the form
+$$
+\begin{aligned}
+Y_{ij}   &\sim \Bernoulli(p_{ij}), \\
+\pi_{ij} &= \frac{\exp(\mu_j + X_{ij}^\top \beta)}
+                 {1 + \exp(\mu_j + X_{ij}^\top\beta)}
+\end{aligned}
+$$
+to this dataset. Here, $Y_{ij}$ is the response (Bush = 1, other = 0) for
+respondent $j$ in state $i$, $\mu_i$ is a state-level intercept, $X_{ij}$ is a
+vector of respondent-level demographic predictors, and $\beta$ is a
+state-invariant regression coefficient vector.
+
+(a) Plot the mean and 95% credible interval for each state-level effect, ordered
+    by their posterior mean.
+
+(b) Which predictors appear to have the largest impact on the probability of an
+    individual voting for Bush?
+    
+(c) (__Optional__) Consider making $\beta$ a random effect, i.e., replace 
+    $\beta$ with $\beta_j$. Is there any interesting variability in how the
+    effect of the demographic predictors varies across states?
+
+:::
+
+# Practice
+
+\tiny
+
+
+:::{.myexercise data-latex="[Math Scores]"}
+
+The dataset in `mathtest.csv` shows the scores on a standardized math test from
+a sample of 10th grade students at 100 different U.S. urban schools, all having
+enrollment of at least 400 10th grade students. Let $\theta_i$ be the underlying
+mean test score for school $i$ and let $Y_{ij}$ be the score for the $j$th
+student in school $i$. You'll notice that the extreme school-level averages
+$\bar Y_{i}$ (both high and low) tend to be at schools where fewer students were
+sampled.
+
+(a) Explain briefly why this would be.
+
+(b) Consider a normal hierarchical model of the form
+$$
+    \begin{aligned}
+      Y_{ij} &\indep \Normal(\theta_i, \sigma^2) \\
+      \theta_i &\sim \Normal(\mu, \tau^2 \sigma^2).
+    \end{aligned}
+$$
+    Write a function that fits this model by (approximately) sampling from
+    the posterior distribution of
+    $(\theta_1, \ldots, \theta_{100}, \mu, \sigma^2, \tau^2)$. Your function
+    should be of the form (assuming the use of \texttt{R})
+
+    ```{r, eval = FALSE}
+    fit_oneway_anova <- function(y, treatment,
+                                 num_warmup, num_save, num_thin) {
+      ## Input:
+      ##   Y: a vector of length n of observations
+      ##   treatment: a vector indicating what treatment was
+      ##                received (in this case, which school)
+      ##   num_warmup: the number of iterations to discard to burn-in
+      ##   num_save: the number of samples to collect
+      ##   num_thin: the thinning interval of the chain
+      ##
+      ## Your code here...
+      return(list(theta = theta_samples, mu = mu_samples,
+                  sigma = sigma_samples, tau = tau_samples))
+    }
+    ```
+
+    Choose appropriate priors for the parameters $(\sigma, \tau, \mu)$ that you
+    believe would be reasonable for default use.
+
+
+(c) Suppose you use the posterior mean $\widehat \theta_i$ from the model above
+    to estimate each school-level mean $\theta_i$. Define the _shrinkage
+    coefficient_ $\kappa_i$ a
+    $$
+      \kappa_i =
+      \frac{\bar Y_i - \widehat \theta_i}{\bar Y_i - \bar Y_{\bullet}},
+    $$
+    where $\bar Y_i$ is the mean of $Y_{ij}$ in group $i$ and $\bar Y_{\bullet}$ is
+    the grand mean over all $i$ and $j$; equivalently, we have $\widehat
+    \theta_i = (1 - \kappa_i) \bar Y_i + \kappa_i \bar Y_{\bullet}$ so that the
+    shrinkage coefficient tells you how much to weight the grand mean relative
+    to the group-level mean. Plot this shrinkage coefficient for each school as
+    a function of that school's sample size.
+
+(d) The model above assumes that the variance within each school is the same (a
+    standard assumption for these types of random effects models). An
+    alternative assumption would be to assume that the variance $\sigma_i$
+    varies according to the school. Extend the model you fit to this setting
+    with $\log \sigma_i \sim \Normal(\mu_\sigma, s_\sigma^2)$. Compare estimates
+    of $\sigma_i$ you obtain to (i) the pooled estimate that fixes $\sigma$ and
+    to (ii) the "unpooled" estimate that estimates each $\sigma_i$ as with the
+    sample standard deviation of each school. The estimates of $\sigma_i$
+    obtained from this hierarchical model are called "partially pooled;"
+    explain why this name is appropriate.
+
+:::
+
+# Practice
+
+\tiny
+
+:::{.myexercise data-latex="[Baseball]"}
+
+
+In 1977, Efron and Morris analyzed data from the 1970 Major League Baseball
+(MLB) season. They took the batting average of 18 players over the first 45
+at-bats. Let $Y_i$ be the number of hits player $i$ obtained over their first 45
+attempts; then a sensible model for the number of hits might be
+$$
+\begin{aligned}
+  Y_i \sim \Binomial(45, p_i),
+  \qquad \text{where} \qquad
+  p_i &\sim \Beta\{\rho \mu, \rho (1 - \mu)\}.
+\end{aligned}
+$$
+
+(a) Write a function to fit a hierarchical model with
+    $(\mu, \rho) \sim \pi(\mu, \rho)$. Specify whatever priors for $\mu$ and
+    $\rho$ you believe to be reasonable. Your code should be of the form:
+    ```{r, eval = FALSE}
+    fit_beta <- function(y, n, num_warmup, num_save, num_thin) {
+      ## Your code here ...
+      return(your_fitted_model) # nolint
+    }
+    ```
+
+(b) Compare the mean squared error of the UMVUE estimate $\widehat
+    p_{i,\text{UMVUE}} = Y_i / 45$ to the Bayes estimator of $\widehat
+    p_{i,\text{Bayes}}$ that you get from the posterior. Which performs better?
+
+(c) Interpret the hyperparameters $\mu$ and $\rho$; practically speaking, what
+    information do these hyperparameters encode?
+
+:::
+
+# Digression: The Normal Means Problem
+
+
+
+The _normal means problem_ sets
+
+$$
+\begin{aligned}
+[Y_i \mid \bmu] &\indep \text{Normal}(\mu_i, 1),
+\end{aligned}
+$$
+
+for $i = 1, \ldots, N$, where $\bmu = (\mu_1, \ldots, \mu_N)$. 
+
+\vspace{1em}
+
+\alert{Goal:} estimate $\bmu$ so as to make $\|\widehat\bmu - \bmu\|_2$ as small
+as possible. \pause
+
+\vspace{1em}
+
+**Applications:**
+
+1. ANOVA
+
+1. Nonparametric estimation in the wavelet domain
+
+1. High-dimensional multiple testing ($\bmu$ assumed sparse)
+
+# Surprising Fact
+
+\footnotesize
+
+:::{.definition data-latex="[Admissibility]"}
+An estimator $\widehat\bmu$ is called *admissible* if there does not exist a
+different estimator $\widetilde\bmu$ such that
+
+$$
+  \E_\mu\left(\|\widetilde\bmu - \bmu\|_2\right) 
+  \le \E_\mu\left(\|\widehat\bmu - \bmu\|_2\right)
+$$
+
+for **all** values of $\mu$.
+
+:::
+
+\pause \vspace{1em}
+
+\alertb{Fact:} The obvious estimator $\widehat\bmu = \bY$ (which is the UMVUE,
+best equivariant estimator, and MLE) is \alert{NOT ADMISSIBLE} when $N \ge 3$.
+
+# James-Stein Estimator
+
+\footnotesize
+
+For $N \ge 3$, the estimator
+
+$$
+  \widehat\bmu_{\text{JS}} = \left(1 - \frac{(N - 2)}{\|\bY\|^2_2}\right) \bY
+$$
+
+*dominates* $\bY$. 
+
+\vspace{2em}
+
+(**Optional:**) Show that this estimator arises from a 
+*random effects model* with $\mu_i \iid \Normal(0, \sigma^2_\mu)$ where the
+shrinkage factor is replaced with an unbaised estimator
+
+$$
+  \frac{1}{\sigma^2_\mu + 1} \approx \frac{N - 2}{\|\bY\|^2}.
+$$
+
+# Exercise
+
+\tiny
+
+:::{.myexercise data-latex="[Random or Fixed Effects?]"}
+
+Consider $n = 5$ and $\mu = (1, 1, 3, 3, 5) / 5$ and let
+$Y \sim \Normal(\mu, \Identity)$. Conduct a simulation experiment comparing the
+mean squared error in estimating $\mu$,
+$\E\{\|\mu - \widehat \mu\|^2\} = \sum_j \E\{(\mu_j - \widehat \mu_j)^2\}$ of
+the following estimators:
+
+1.  The maximum likelihood estimator $\widehat \mu = Y$.
+
+2.  The *predicted value* of $\mu_j$ given by
+    $\E(\mu_j \mid Y) = \frac{\nu^2 Y_j}{1 + \nu^2}$ with the random effect
+    distribution $\mu_j \sim \Normal(0, \nu^2)$. Estimate $\nu$ with its MLE
+    after integrating out $\mu$. *Hint:* the MLE of $\nu^2$ is
+    $\max\{\frac{\|Y\|^2}{5} - 1, 0\}$, but you need to show this.
+
+Repeat this over 1000 replications for each estimator. How do the methods
+compare? Note that the MLE has many "desirable" properties --- it is minimax
+optimal, it is the UMVUE, and it is the [best invariant
+estimator](https://en.wikipedia.org/wiki/Invariant_estimator).
+
+:::
+
+# Exercise
+
+\tiny
+
+
+::: {.myexercise data-latex="[Normal Means in High Dimensions]"}
+
+Consider the model $Z_i \sim \Normal(\mu_i, 1)$ (conditional on $\mu_i$) where
+$i = 1,\ldots,P$ and $P$ is very large (say, 10,000). A-priori, we expect many
+of the $\mu_i$'s to be zero; this might be reasonable, for example, in genomic
+problems where the $Z_i$'s represent test statistics corresponding to $P$
+different genes, where we expect that most genes are unrelated to the response
+we are interested in. We consider a hierarchical model
+$$
+  \mu_i \sim p \cdot \Normal(0, \tau^2) + (1 - p) \cdot \delta_0,
+$$
+where $\delta_0$ is a point mass distribution at $0$. That is, with
+probability $p$, $\mu_i$ is non-zero (in which case it has a normal
+distribution) and, with probability $1 - p$, $\mu_i$ is identically zero.
+
+(a) Suppose that $p$ is known. Show that the marginal distribution of $Z_i$ is a
+    mixture of two normal distributions,
+$$
+      m(Z_i) = p \cdot \Normal(0, 1 + \tau^2) + (1 - p) \cdot \Normal(0, 1).
+$$
+
+(b) Given $Z_i = z$, show that the posterior probability that $\mu_i = 0$ is
+$$
+      \Pi(\mu_i = 0 \mid Z_i = z)
+      =
+      \frac{(1 - p) \cdot \Normal(z \mid 0, 1)}
+       {p \cdot \Normal(0 \mid \tau^2 + 1) +
+         (1 - p) \cdot \Normal(z \mid 0, 1)}.
+$$
+
+(c) One might be tempted to use an "uninformative prior" in this setting, taking
+    $\tau \to \infty$. What happens to the posterior probability in part (b) if
+    you do this? Explain.
+
+(d) Find the value of $\tau^2$ which minimizes $\Pi(\mu_i = 0 \mid Z_i = z)$.
+    Show that the posterior odds of $\mu_i \ne 0$ is given by
+$$
+      O = \frac{p}{|z|(1 - p)}
+      \exp\left\{
+        \frac 1 2 (z^2 - 1)
+      \right\}
+$$
+    for $z^2 \ge 1$ and is $p / (1 - p)$ otherwise. That is, the probability
+    that $\mu_i \ne 0$ is *no larger than* $O / (1 + O)$.
+
+(e) Now, suppose $P = 1$ and that I am a social scientist looking into some
+    counter-intuitive (but headline-generating) theory. A-priori, you think my
+    theory is compelling, but not likely to be true; instead, you think it is
+    true with probability 10%. I conduct a study and observe $z = 2$ and I
+    conclude that, with 95% confidence, my theory is true --- my paper is
+    published, I get tenure, and I give a well-received TED-talk. Based on the
+    bound from the previous exercise, give an upper bound on the posterior
+    probability my theory is true.
+
+(f) In the high-dimensional setting, we think that very few of the $\mu_i$'s are
+    non-zero. Suppose that we believe that roughly $Q \ll P$ of the hypotheses
+    will be true so that $p = Q/P$. How big must $Z_i$ be for use to believe
+    that, with probability at least $0.5$, that $\mu_i \ne 0$? For $P = 10,000$,
+    plot the required value for $Z_i$ as a function of $Q$ for
+    $Q = 1,2,\ldots,100$. What is the $P$-value corresponding to these values of
+    $Z_i$?
+
+(g) Since we don't know $(p, \tau^2)$, it seems reasonable to try to learn them
+    from the data. An *empirical Bayes* approach selects $(p,\tau)$ by
+    maximizing the marginal likelihood
+$$
+      m(Z)
+      = \prod_{i=1}^P m(Z_i)
+      = \prod_{i=1}^{P} \{
+      p \cdot \Normal(Z_i \mid 0, \tau^2 + 1) + (1 - p) \Normal(Z_i \mid 0, 1)
+    \}.
+$$
+    Simulate data with
+    $\mu_i = (5,5,5,5,5,\underbrace{0,\ldots,0}_{P - 5 \text{ times}})$ and
+    compute the empirical Bayes estimates $(\widehat p, \widehat \tau)$ by
+    minimizing $- \log m(Z)$. What values do you get?
+
+(h) Show that the Bayes estimator of $\mu_i$ is given by
+$$
+    \begin{aligned}
+      \frac{p \Normal(Z_i \mid 0, \tau^2 + 1)}
+       {p \cdot \Normal(Z_i \mid 0, \tau^2 + 1) +
+         (1 - p) \cdot \Normal(Z_i \mid 0, 1)}
+      \cdot
+      \frac{1}{1+\tau^{-2}} Z_i.
+    \end{aligned}
+$$
+    Plot the Bayes estimator for your simulated data against $i$.
+
+(i) Plot the shrinkage factor
+$$
+    \begin{aligned}
+    B(z) =
+    \frac{p \Normal(Z_i \mid 0, \tau^2 + 1)}
+     {p \cdot \Normal(Z_i \mid 0, \tau^2 + 1) +
+       (1 - p) \cdot \Normal(Z_i \mid 0, 1)}
+    \cdot
+    \frac{1}{1+\tau^{-2}}
+    \end{aligned}
+$$
+    for the empirical Bayes values of $\widehat p, \widehat \tau$ against
+    $z$. Comment on how the shrinkage operator behaves relative to the naive
+    estimator $\widehat \mu_i = Z_i$, which has a shrinkage factor $B(z) = 1$.
+
+:::
+
+# Generalized Estimating Equations
+
+\footnotesize
+
+\alert{What if I don't care about conditional inference?} 
+
+\vspace{1em}
+
+For clustered data $\{Y_{ij}: i =1,\ldots,N_j, j = 1,\ldots J\}$ with marginal
+model $g\{E(Y_{ij} \mid X_{ij}, \beta)\} = X_{ij}^\top \beta$, consider a
+_generalized estimating equation_ (GEE):
+
+$$
+  \sum_{j = 1}^J \frac{\partial \bmu_j^\top}{\partial \beta} 
+      V_j^{-1} (\bY_j - \bmu_j)
+  =
+  \zeros_P.
+$$
+
+where $V_j = V_j(\bmu_j, \alpha)$ is a *working covariance matrix* for the
+$\bY_j$'s.
+
+# GEE Properties
+
+\footnotesize
+
+- If $\bmu_j$ is correctly specified, estimator usually is consistent/satisfies
+  a CLT.
+
+- If $V_j(\bmu_j, \alpha)$ is also correctly specified, estimator will be *efficient*.
+
+- Robust standard errors (based on sandwich matrix) used for inference, works
+  even if $V_j$ is totally misspecified.
+  
+- Generalizes the quasi-likelihood estimating equation
+$$
+  \sum_{i=1}^N \frac{\omega_i \, (Y_i - \mu_i)}{\phi \, V(\mu_i) \, g'(\mu_i)}
+  =
+  \zeros
+$$
+
+# Form of Working Variance
+
+Working variance is parameterized as
+
+$$
+  V_j = D_j^{1/2} \, R_j(\alpha) \, D_j^{1/2}
+$$
+
+where
+
+$$
+  D_j = \diag\left(\frac{\phi}{\omega_{ij}} \, V(\mu_{ij}) : i = 1, \ldots, N_j\right)
+$$
+
+and $R_j(\alpha)$ is a *working correlation matrix*.
+
+# Choices of Working Correlation
+
+\footnotesize
+
+Take $R_j(\alpha)$ to be
+
+$$
+\begin{aligned}
+\underbrace{\begin{pmatrix}
+  1 & \alpha & \cdots & \alpha \\
+  \alpha & 1 & \cdots & \alpha \\
+  \vdots & \vdots & \ddots & \vdots \\
+  \alpha & \alpha & \cdots & 1
+  \end{pmatrix}}_{\text{exchangeable}}
+  \quad \text{or} \quad
+  \underbrace{\begin{pmatrix}
+  1 & \alpha & \alpha^2 & \cdots & \alpha^{N_j - 1} \\
+  \alpha & 1 & \alpha & \cdots & \alpha^{N_j - 2} \\
+  \vdots & \vdots & \vdots & \ddots & \vdots \\
+  \alpha^{N_j - 1} & \alpha^{N_j - 2} & \alpha^{N_j - 3} & \cdots & 1
+\end{pmatrix}}_{\text{AR1}}
+\end{aligned}
+$$
+
+depending on context.
+
+\alert{Note:} our motivation for getting these nearly correct is efficiency!
+
+# Exercise
+
+\tiny
+
+
+:::{.myexercise data-latex="[Ticks Revisited]"}
+
+Recall the `ticks` dataset from the previous set of notes and consider a model
+with a linear predictor containing the terms `YEAR`, `HEIGHT`, and
+`YEAR:HEIGHT`. In this exercise, we will compare a model that takes
+\begin{align}
+    \label{eq:poisson-gee}
+    \E_\theta(Y_{ij} \mid X_i = x) = \exp(\alpha + x^\top \beta)
+\end{align}
+to a hierarchical model that takes
+\begin{align}
+    \label{eq:poisson-glmm}
+    [Y_{ij} \mid X_{ij} = x, \alpha_j, \beta]
+    \indep
+    \Poisson\{\exp(\alpha + b_j + x^\top\beta)\},
+    \qquad 
+    b_j \sim \Normal(0, \sigma^2_b).
+\end{align}
+
+Note that the first model does not explicitly make a statement about the
+dependence structure within clusters, while the second specifies the full joint
+distribution of the $Y_{ij}$'s.
+
+a. Show that the Poisson random effects model \eqref{eq:poisson-glmm} is a 
+   special case of the model \eqref{eq:poisson-gee} in the sense that if
+   \eqref{eq:poisson-glmm} is true then \eqref{eq:poisson-gee} is also true.
+   __NOTE:__ this is very important, as otherwise we would not be able to
+   apples-to-apples comparisons of the inferences between the two models.
+   
+b. Use the `stan_glmer` function in the `rstan` package to fit 
+   \eqref{eq:poisson-glmm} to the `ticks` data. Then, plot the posterior
+   distribution of the `HEIGHT` coefficient; is there evidence that this
+   coefficient is non-zero?
+   
+c. Briefly, state which correlation structure seems best suited to this data 
+   (AR1 or exchangeable)? Justify your answer.
+   
+d. Using the exchangeable correlation structure, use the `geeglm` function in 
+   the `geepack` package to fit \eqref{eq:poisson-gee} using a GEE. Compare the
+   standard error reported here with the standard error of the Poisson GLMM for
+   the `HEIGHT` coefficient.
+   
+e. Repeat part (d), but use the independence correlation structure. How does
+   the standard error compare across the two models? Which correlation structure
+   would you recommend. __NOTE:__ Of course, you shouldn't choose correlation
+   structures according to which inferences you prefer after the fact...
+   
+f. Use the `stan_glmer.nb` function to a negative binomial variant of the
+   model \eqref{eq:poisson-glmm}. How does the standard error for $\beta$ look
+   now relative to the other methods?
+
+:::
+
+# Cons of GEEs
+
+\footnotesize
+
+- Marginal, rather than conditional, inference (not necessarily a bad thing)
+
+- No estimate of the data generating mechanism
+
+- Can be difficult to check/critique
+
+- Not easy to do a Bayesian version
+
+
+
