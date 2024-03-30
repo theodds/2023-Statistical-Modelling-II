@@ -38,7 +38,11 @@ couple of examples include:
    where $\epsilon_i \iid \Normal(0, \sigma^2)$. We assume $\mu(x)$ is an
    arbitrary function. While this is probably more accurately referred to as
    _Gaussian semiparametric regression_, some folks still regard this as a
-   nonparametric problem.
+   nonparametric problem. The reason they do this is because the _parameter of
+   interest_ $\mu(x)$ is infinite dimensional, and they reserve the term
+   "semiparametric regression" for settings in which the parameter of interest
+   is _finite dimensional_ (but where there exists an infinite dimensional
+   nuisance parameter).
 
 Nonparametric models can be contrasted with _parametric_ models and
 _semiparametric_ models. Semiparametric models are halfway between parametric
@@ -82,7 +86,10 @@ $$
 
 This decomposition is referred to as the _bias-variance decomposition_.
 Nonparametric function estimation involves balancing these quantities: how small
-can we make the bias while keeping the variance manageable?
+can we make the bias while keeping the variance manageable? Unlike in parametric
+problems, where the bias is usually _much smaller_ than the variance, in
+nonparametric problems we usually find that the best-case-scenario is that the
+bias and variance are roughly the same size.
 
 :::{.myexercise data-latex="[Density Estimation With Histograms]"}
 
@@ -342,15 +349,14 @@ b. We don't know the residual variance, but we can estimate it. A basic fact is
    $2\mbox{tr}(H) - \mbox{tr}(H^\top H)$ is often referred to as the "effective
    degrees of freedom" in such problems.
 
-c. Load `utilities.csv` located at
-   https://raw.githubusercontent.com/theodds/StatModelingNotes/master/datasets/utilities.csv
-   into `R`. This data set shows the monthly gas bill (in dollars) for a
-   single-family home in Minnesota, along with the average temperature in that
-   month (in degrees F), and the number of billing days in that month. Let $Y_i$
-   be the average daily gas bill in a given month (i.e. dollars divided by
-   billing days), and let $X_i$ be the average temperature. Using leave-one-out
-   cross-validation to choose the bandwidth, make a scatterplot of `gasbill` as
-   a function of `temp` with a kernel smooth of the relationship overlayed.
+c. Load `utilities.csv` located at the course website into `R`. This data set
+   shows the monthly gas bill (in dollars) for a single-family home in
+   Minnesota, along with the average temperature in that month (in degrees F),
+   and the number of billing days in that month. Let $Y_i$ be the average daily
+   gas bill in a given month (i.e. dollars divided by billing days), and let
+   $X_i$ be the average temperature. Using leave-one-out cross-validation to
+   choose the bandwidth, make a scatterplot of `gasbill` as a function of `temp`
+   with a kernel smooth of the relationship overlayed.
 
 d. Inspect the residuals from the model you just fit.  Does the assumption of
    constant variance (homoskedasticity) look reasonable? If not, do you have any
@@ -891,12 +897,12 @@ This creates the following dilemma for methods based on local information:
 
 The optimal tradeoff occurs when the variance of an estimator $\widehat \mu(x)$
 is roughly equal to its squared bias, and it happens to be the case that this
-results in an optimal RMSE of order $N^{-2/(2+P)}$ (assuming that $\mu(x)$ is
+results in an optimal RMSE of order $N^{-2/(4 + P)}$ (assuming that $\mu(x)$ is
 twice-continuously differentiable).
 
 :::{.myexercise data-latex="[Power Analysis]"}
 
-Supposing that the RMSE scales like $N^{-2/(2+P)}$, how large must $N$ be in
+Supposing that the RMSE scales like $N^{-2/(4+P)}$, how large must $N$ be in
 order for us to get an RMSE less than a fixed constant $\delta$? How does this
 depend on the dimensionality $P$?
 
@@ -905,7 +911,7 @@ depend on the dimensionality $P$?
 :::{.myexercise data-latex="[Geometry]"}
 
 In this exercise, we will demonstrate numerically the point that observations in
-a high-dimensional space tend to be far away from one another.
+a high-dimensional space tend to be _equally_ far away from one another.
 
 a. Write a function to generate $N$ random data points $X_i$ uniformly
    distribution within a $P$-dimensional hypercube.
