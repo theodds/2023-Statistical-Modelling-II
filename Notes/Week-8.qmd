@@ -30,9 +30,11 @@ couple of examples include:
    density.
 
 1. Suppose we have
+
    $$
      Y_i = \mu(X_i) + \epsilon_i
    $$
+
    where $\epsilon_i \iid \Normal(0, \sigma^2)$. We assume $\mu(x)$ is an
    arbitrary function. While this is probably more accurately referred to as
    _Gaussian semiparametric regression_, some folks still regard this as a
@@ -58,6 +60,7 @@ All errors and typos past this point are, of course, my own.
 
 Let $\widehat \mu(x)$ be a noisy estimate of some function $\mu(x)$ at some
 point $x$ and define the _mean-squared error_ of the estimate as
+
 $$
   \MSE(\widehat\mu, \mu)
   =
@@ -68,6 +71,7 @@ $$
 
 Show that $\MSE(\widehat\mu, \mu)$ decomposes into a _bias_ term and a
 _variance_ term $\MSE = B^2 + V$:
+
 $$
   B = \E_\theta\{\widehat\mu(x)\} - \mu(x)
   \qquad \text{and} \qquad
@@ -88,11 +92,13 @@ Why is this a tradeoff? Here's a simple example to convey the intuition.
 Suppose we observe $Z_1, \ldots, Z_N$ from some distribution $F$ and want to
 estimate $f(0)$, the value of the probability density at $0$. Let $h$ be a small
 positive number, called the _bandwidth_, and define the quantity
+
 $$
   \pi_h 
   = \Pr\left( -\frac{h}{2} < Z < \frac{h}{2}\right)
   = \int_{-\frac{h}{2}}^{\frac{h}{2}} f(z) \ dz.
 $$
+
 For small $h$ we have $\pi_h \approx h \, f(0)$ provided that $f(x)$ is
 continuous at $0$.
 
@@ -102,15 +108,19 @@ a. Let $M$ be the number of observations in a sample of size $N$ that fall
    $\widehat f(0)$ of $f(0)$ based on $M$.
 
 b. Suppose we expand $f(z)$ in a second-order Taylor series about $0$:
+
    $$
      f(z) \approx f(0) + f'(0) \, z + \frac{1}{2} f''(0) \, z^2.
    $$
+
    Use this, together with the bias-variance decomposition, to show that
+
    $$
      \MSE\{\widehat f(0), f(0)\}
      \approx
      A h^4 + \frac{B}{Nh}
    $$
+
    for constants $A$ and $B$ that you should (approximately) specify. What
    happens to the bias and variance when you make $h$ small? When you make $h$
    big?
@@ -138,15 +148,18 @@ a. Suppose you want to estimate the value of the regression function
    Recall the least-squares estimator for multiple regression. Show that for the
    one-predictor case, your prediction $\mu(x^\star) = \widehat \beta \,
    x^\star$ can be expressed as a _linear smoother_ of the form
+
    $$
      \widehat \mu(x^\star)
      =
      \sum_{i=1}^N w(X_i, x^\star) \, Y_i
    $$
+
    for any $x^\star$. Inspect the weighting function you derived. Briefly
    describe your understanding of how the resulting smoother behaves, compared
    with the smoother that arises from an alternate form of the weight function
    $w(X_i, x^\star)$:
+
    $$
      w_K(X_i, x^\star) = 
      \begin{cases}
@@ -155,9 +168,11 @@ a. Suppose you want to estimate the value of the regression function
        0 \qquad & \text{otherwise}.
      \end{cases}
    $$
+
    This is referred to as the _K-nearest neighbor_ smoother.
     
 b. A _kernel function_ $K(x)$ is a smooth function satisfying
+
    $$
      \int_{-\infty}^\infty K(x) \ dx = 1, 
      \qquad
@@ -165,7 +180,9 @@ b. A _kernel function_ $K(x)$ is a smooth function satisfying
      \qquad
      \int_{-\infty}^\infty x^2 \, K(x) \ dx < \infty.
    $$
+
    A very simple example is the uniform kernel,
+
    $$
      K(x) = \frac{1}{2} \, I(x) \qquad \text{where} \qquad
      I(x) = \begin{cases}
@@ -173,15 +190,20 @@ b. A _kernel function_ $K(x)$ is a smooth function satisfying
        0 \qquad & \text{otherwise}.
      \end{cases}
    $$
+
    Another common choice is the _Gaussian kernel_,
+
    $$
      K(x) = \frac{1}{\sqrt{2 \pi}} \, \exp\left(-\frac{x^2}{2}\right).
    $$
+
    Kernels are used as weighting functions for taking local averages;
    specifically, define the weighting function
+
    $$
      w(X_i, x^\star) = \frac{1}{h}K\left(\frac{X_i - x^\star}{h}\right),
    $$
+
    where $h$ is the bandwidth. Using this weighting function in a linear
    smoother is called _kernel regression_. (The weighting function gives
    unnormalized weights; you should also normalize the weights so that they sum
@@ -226,10 +248,12 @@ b. Imagine a conceptual two-by-two table for the unknown, true state of affairs.
    make the period small.] Apply your method to each case, using the testing data
    to select a bandwidth parameter. Choose the estimate that minimizes the
    average squared error in prediction, which estimates the mean-squared error:
+
    $$
      L_N(\widehat{\mu}) = \frac{1}{N^\star}\sum_{i=1}^{N^{\star}}
        (Y^{\star}_i - \widehat{Y}_i^{\star} )^2 \, ,
    $$
+
    where $(Y_i^{\star}, X_i^{\star})$ are the points in the test set, and
    $\widehat{Y}_i^{\star}$ is your predicted value arising from the model you
    fit using only the training data. Does your out-of-sample predictive
@@ -239,9 +263,11 @@ c. __Optional: ("leave-one-out lemma)"__ Splitting a data set into two chunks to
    choose $h$ by out-of-sample validation has some drawbacks. (See if you can think
    of two; one is obvious, one is more subtle.) Then consider an alternative:
    leave-one-out cross validation. Define
+
    $$
      \mbox{LOOCV} = \sum_{i=1}^N \left( Y_i - \widehat{Y}_{i}^{(-i)} \right)^2 \, ,
    $$
+
    where $\widehat{Y}_{i}^{(-i)}$ is the predicted value of $Y_i$ obtained by
    omitting the $i^{\text{th}}$ pair $(X_i, Y_i)$ and fitting the model to the
    training data set of size $N - 1$.^[The intuition here is straightforward: for
@@ -258,6 +284,7 @@ c. __Optional: ("leave-one-out lemma)"__ Splitting a data set into two chunks to
    values as $\widehat{Y} = H Y$, where $H$ is called the smoothing matrix (or
    "hat matrix") and $Y$ is the vector of observed outcomes. Deduce that, for
    any linear smoother,
+
    $$
    \mbox{LOOCV} = \sum_{i=1}^N
      \left( \frac{Y_i - \widehat{Y}_{i} } {1-H_{ii}} \right)^2 \, .
@@ -295,17 +322,21 @@ b. We don't know the residual variance, but we can estimate it. A basic fact is
    that if $X$ is a random vector with mean $\mu$ and covariance matrix
    $\Sigma$, then for any symmetric matrix $Q$ of appropriate dimension, the
    quadratic form $X^\top Q X$ has expectation
+
    $$
      E(X^\top Q X) = \mbox{tr}(Q \Sigma) + \mu^\top Q \mu \, .
    $$
+
    Consider an arbitrary linear smoother (i.e., one with $\widehat Y = HY$ for
    some smoothing matrix $H$). Write the vector of residuals as $R = Y -
    \widehat{Y} = Y - HY$, where $H$ is the smoothing matrix. Compute the
    expected value of the estimator
+
    $$
      \widehat{\sigma}^2
      = \frac{\|R\|^2}{n - 2\mbox{tr}(H) + \mbox{tr}(H^\top H)} \, ,
    $$
+
    and simplify things as much as possible. Roughly under what circumstances
    will this estimator be nearly unbiased for large $N$? Note: the quantity
    $2\mbox{tr}(H) - \mbox{tr}(H^\top H)$ is often referred to as the "effective
@@ -343,33 +374,41 @@ pairs $(X_i, Y_i)$ for $i = 1, \ldots, N$ from our new favorite model, $Y_i =
 $\mu(x)$ at some point $x$ by weighted least squares. Our estimate is the
 scalar^[Because we are only talking about the value of the function at a
 specific point $x$, not the whole function.] quantity
+
 $$
   \widehat\mu(x) = a = 
   \arg \min_{\mathbb R} \sum_{i=1}^N w_i (Y_i - a)^2 \, ,
 $$
+
 where the $w_i$ are the normalized weights (i.e.~they have been rescaled to sum
 to 1 for fixed $x$). Clearly if $w_i = 1/N$, the estimate is simply $\bar{Y}$,
 the sample mean, which is the "best" globally constant estimator. Using
 elementary calculus, it is easy to see that if the unnormalized weights are
+
 $$
   w_i \equiv w(x, X_i) = \frac{1}{h} K \left( \frac{X_i - x}{h} \right)  \, ,
 $$
+
 then the solution is exactly the kernel-regression estimator.
 
 A natural generalization of the locally constant regression is local polynomial
 regression. For points $u$ in a neighborhood of the target point $x$, define the
 polynomial
+
 $$
   g_{x}(u; a) = a_0 + \sum_{k=1}^D a_k \, (u-x)^k
 $$
+
 for some vector of coefficients $a = (a_0, \ldots, a_D)$. As above, we will
 estimate the coefficients $a$ in $g_{x}(u; a)$ at some target point $x$ using
 weighted least squares:
+
 $$
   \widehat{a} = 
     \arg \min_{\mathbb R^{D+1}} 
     \sum_{i=1}^N w_i \left\{ Y_i - g_{x}(X_i; a)  \right\}^2 \, ,
 $$
+
 where $w_i \equiv w(X_i, x)$ are the kernel weights defined just above,
 normalized to sum to one.^[We are fitting a different polynomial function for
 every possible choice of $x$. Thus $\widehat{a}$ depends on the target point
@@ -380,9 +419,11 @@ link](http://rafalab.dfci.harvard.edu/dsbook/smoothing.html#local-weighted-regre
 A particular example of a local polynomial method is the _loess_ method
 implemented in the `loess` function. This method uses the _tricube_ weighting
 function
+
 $$
   w(x, X_i) = \left\{1 - \left(\frac{|x - X_i|}{h_\alpha(x)}\right)^3\right\}_+^3
 $$
+
 where $h_\alpha(x) = \max_{j : X_j \in B_x}\{|x - X_j|\}$ and $B_x$ is a
 neighborhood of $x$ chosen so to include $100\alpha\%$ of the data; for example,
 if $\alpha = 0.1$ then the bandwidth will be chosen using the $10\%$ of the
@@ -431,9 +472,11 @@ A criteria for a prior to be "flexible" from this perspective is that the
 support of the prior $\Pi(d\mu)$ should have _large support_ in the sense that
 an arbitrary $\mu_0$ can be well-approximated by a sample from the prior; for
 example, if $\mathcal X$ is compact, we might ask that
+
 $$
   \Pi(\sup_{x \in \mathcal X} |\mu_0(x) - \mu(x)| < \epsilon) > 0
 $$
+
 for all $\mu_0 \in \mathscr F$ and all $\epsilon > 0$. A common choice of prior
 $\Pi(d\mu)$ that can accomplish these goals is a Gaussian process prior.
 
@@ -442,10 +485,12 @@ $\Pi(d\mu)$ that can accomplish these goals is a Gaussian process prior.
 Let $m : \mathcal X \to \mathbb R$ and $K: \mathcal X^2 \to \mathbb R$. A random
 function $\mu : \mathcal X \to \mathbb R$ is said to be a _Gaussian process_ if,
 for any _finite_ set $D = \{x_1, \ldots x_D\}$ we have
+
 $$
   \mu(\mathbf x) =
   \Normal\{m(\mathbf x), K(\mathbf x, \mathbf x)\}
 $$
+
 where $\mathbf x = (x_1, \ldots, x_D)^\top$, $\mu(\mathbf x) = (\mu(x_1),
 \ldots, \mu(x_D))^\top$, $m(\mathbf x) = (m(x_1), \ldots, m(x_D))^\top$, and
 $K(\mathbf x, \mathbf x')$ is a covariance matrix with $(i,j)^{\text{th}}$ entry
@@ -486,10 +531,12 @@ Show that $\mu = \E(X)$ and $\Sigma = \Var(X)$ from this definition.
 :::{.myexercise data-latex="[Characteristic Functions]"}
 
 The _characteristic function_ of a random vector $X$ is the function
+
 $$
 \varphi_X(\lambda)
   = \E(e^{i\lambda^\top X})
 $$
+
 where $i$ is the imaginary unit (i.e., $i^2 = -1$). The characteristic function
 is similar to the moment generating function, with the important benefit that
 $\varphi_X(\lambda)$ is guaranteed to exist for all $\lambda$. It can be shown
@@ -521,20 +568,25 @@ c. Show that this also holds in the other direction: if $Y \sim \Normal(\mu,
 
 Suppose that $\Sigma$ is full-rank and that $Y \sim \Normal(\mu, \Sigma)$. Show
 that $Y$ has density
+
 $$
   f(y \mid \mu, \Sigma)
   =
   \frac{1}{\sqrt{(2\pi)^n |\Sigma|}}
     \exp\left\{ -\frac 1 2 (y - \mu)^\top \Sigma^{-1} (y - \mu) \right\}.
 $$
+
 What happens if $\Sigma$ is _not_ full-rank? _Hint:_ recall the change of
 variables formula, which states that if $Y = T(Z)$ where $T$ is a smooth
 one-to-one function then the density of $Y$ is
+
 $$
   f_Y(y) = f_Z\{T^{-1}(y)\} |J(y)|
 $$
+
  where $J(y)$ is the Jacobian matrix of $T^{-1}$. When $T(Z) = \mu + L Z$ where
  $L$ is a full-rank matrix, this simplifies to
+
 $$
   f_Y(y) = f_Z\{L^{-1}(Y - \mu)\} |L^{-1}|. 
 $$
@@ -573,6 +625,7 @@ b. Using this result, show that the characteristic function of $X \sim
 
 The multivariate normal distribution has a large number of desirable properties.
 First, it is _closed under marginalization_. Suppose that
+
 $$
   \begin{pmatrix}
     X \\ Y
@@ -587,6 +640,7 @@ $$
   \end{pmatrix}
   \right).
 $$
+
 Here, the vectors $\mu_x$ and $\mu_y$ have the same dimension as $X$ and $Y$,
 and $\Sigma_{xx}$ and $\Sigma_{yy}$ are positive semi-definite symmetric
 matrices with dimensions matching $X$ and $Y$ respectively. Because the
@@ -613,6 +667,7 @@ c. Using the characteristic function, show that for the multivariate normal
 
 d. Suppose $Y \sim \Normal(\mu, A)$ given $\mu$ and $\mu \sim \Normal(m, B)$.
    Show that
+
    $$
    \begin{aligned}
    \begin{pmatrix}
@@ -630,6 +685,7 @@ d. Suppose $Y \sim \Normal(\mu, A)$ given $\mu$ and $\mu \sim \Normal(m, B)$.
      \right\}.
    \end{aligned}
    $$
+
 :::
 
 :::{.myexercise data-latex="[The Conditionals]"}
@@ -672,36 +728,41 @@ conditional on $\bX$ for $i = 1, \ldots, N$ and $\mu$. Let $\bX = (X_1, \ldots,
 X_N)$ and $\bY = (Y_1, \ldots, Y_N)$.
 
 a. Show that the posterior distribution of $\mu$ is given by
-$$
-  [\mu \mid \bX, \bY, \sigma^2]
-  \sim
-  \GP(m^\star, K^\star)
-$$
-where
-$$
-\begin{aligned}
-  m^\star(x) &=
-    m(x) +
-      K(x, \bX) \{K(\bX, \bX) +
-      \sigma^2 \Identity\}^{-1} \{\mathbf Y - m(\mathbf X)\} \\
-  K^\star(x, x') &= 
-    K(x, x') 
-      -K\left(\binom{x}{x'}, \bX\right) 
-      \{K(\bX, \bX) + \sigma^2 \Identity\}^{-1} 
-      K\left(\binom{x}{x'}, \bX\right)^\top
-\end{aligned}
-$$
+
+   $$
+     [\mu \mid \bX, \bY, \sigma^2]
+     \sim
+     \GP(m^\star, K^\star)
+   $$
+
+   where
+
+   $$
+   \begin{aligned}
+     m^\star(x) &=
+       m(x) +
+         K(x, \bX) \{K(\bX, \bX) +
+         \sigma^2 \Identity\}^{-1} \{\mathbf Y - m(\mathbf X)\} \\
+     K^\star(x, x') &= 
+       K(x, x') 
+         -K\left(\binom{x}{x'}, \bX\right) 
+         \{K(\bX, \bX) + \sigma^2 \Identity\}^{-1} 
+         K\left(\binom{x}{x'}, \bX\right)^\top
+   \end{aligned}
+   $$
 
 b. Argue that the marginal likelihood of $\bY$ (i.e., with the random function
    $\mu$ integrated out) is given by
+ 
    $$
      |2\pi(K(\bX, \bX) + \sigma^2 \, \Identity)|^{-1/2} 
      \exp\left\{-\frac 1 2 (\bY - m(\bX))^\top 
                           (K(\bX, \bX) + \sigma^2 \, \Identity)^{-1} 
                           (\bY - m(\bX))\right\}.
    $$
-   Or, equivalently, that $[\bY \mid \bX, \sigma] \sim \Normal\left\{m(\bX),
-   K(\bX, \bX) + \sigma^2 \, \Identity\right\}$.
+ 
+   Or, equivalently, that
+   $[\bY \mid \bX, \sigma] \sim \Normal\left\{m(\bX), K(\bX, \bX) + \sigma^2 \, \Identity\right\}$.
 
 :::
 
