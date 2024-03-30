@@ -604,6 +604,7 @@ We now derive the characteristic function of the multivariate normal
 distribution.
 
 a. Show that a standard normal random variable $Z$ has characteristic function
+   
    $$
      \varphi_Z(t)
      =
@@ -611,6 +612,7 @@ a. Show that a standard normal random variable $Z$ has characteristic function
      =
      e^{-t^2 / 2}.
    $$
+   
    This can be done in two steps: (i) because $\sin(tZ)$ is an odd function and
    $Z$ is symmetric, the imaginary part disappears and (ii) by differentiating
    under the integral, we can establish the differential equation $\frac d {dt}
@@ -797,6 +799,7 @@ a. Write a function that evaluates the negative marginal log-likelihood of the
    data $\bY$ under a squared exponential kernel with parameters $(\sigma^2_\mu,
    \sigma^2_\delta, h, \sigma^2)$. For reasons we will see in the next part,
    your function should be of the form:
+   
    ```{r, eval = FALSE}
    neg_loglik <- function(theta, sigma_delta_sq, X, y) {
      sigma_mu_sq <- exp(theta[1])
@@ -805,6 +808,7 @@ a. Write a function that evaluates the negative marginal log-likelihood of the
      ## Your code here:
    }
    ```
+   
    Use this function to evaluate the marginal likelihood of the hyperparameter
    settings $\sigma^2_\mu = 1, \sigma^2_\delta = 0, \sigma^2 = 1, h = 0.2$ on
    the `utilities`, after centering and scaling both `temp` and `gasbill`.
@@ -816,6 +820,7 @@ a. Use the `optim` function with the `neg_loglik` function to optimize the
 
 a. Write a function that fits a Gaussian process posterior under this prior 
    distribution to data. The function should be of the form
+   
    ```{r, eval = FALSE}
    fit_gp <- function(X, Y, X_test, sigma_mu_sq, h, sigma_sq, sigma_delta_sq) {
      ## Your code here
@@ -826,6 +831,7 @@ a. Write a function that fits a Gaussian process posterior under this prior
      ))
    }
    ```
+   
    where `mu_hat` is the posterior mean of the function evaluated at the points
    in `X_test`, `lower` and `upper` are the endpoints of 95% credible intervals
    intervals. Then use this with the optimal values to construct a scatterplot
@@ -837,21 +843,27 @@ a. Write a function that fits a Gaussian process posterior under this prior
 a. You might notice that the relationship between $Y_i$ and $X_i$ in this data
    appears to be approximately linear. One way to account for this is to use a
    _linear_ mean function in the Gaussian process model, i.e.,
+   
    $$
      m(x) = \beta_0 + \beta_1 x \, .
    $$
+   
    Since we don't know $\beta_0$ and $\beta_1$, however, we might want to put a
    prior distribution on these as well. Show that if we set $\beta_0 \sim
    \Normal(0, a^2)$ and $\beta_1 \sim \Normal(0, b^2)$, then this is
    _equivalent_ to using the modified covariance function
+   
    $$
      K_{\text{new}}(x, x') = K(x,x') + a^2 + b^2 x x' \, .
    $$
+   
    Equivalently, the covariance matrix for $\bX$ is given by
+   
    $$
      K_{\text{new}}(\bX, \bX) = K(\bX,\bX) + a^2 \, \boldsymbol{J}
        + b^2 \bX\bX^\top \, ,
    $$
+   
    where $\boldsymbol{J} = \boldsymbol 1 \boldsymbol 1^\top$ is a matrix
    consisting of all $1$'s. Now, modify your `fit_gp` function to create a new
    function `fit_gp_linear` that fits a Gaussian process with a linear mean
